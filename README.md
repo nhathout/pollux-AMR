@@ -8,7 +8,9 @@ An autonomous countertop-cleaning robot with integrated reinforcement learning t
    
 3. **OpenAI Gymnasium (Gym)** for simulation
    
-4. **ROS (Robot Operating System)** for facilitating communication between the sensors/hardware, the RL libraries, and the simulation tools.
+4. **ROS (Robot Operating System)** for facilitating communication between the sensors/hardware, the RL libraries, and the simulation tools
+
+5. **Development Environment**: Windows PC with WSL2 running Ubuntu 20.04
 
 **Hardware Components:**
 1. **Robot Base**: 2 wheels, 1 castor wheel
