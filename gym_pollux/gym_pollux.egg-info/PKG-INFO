@@ -1,0 +1,7 @@
+Metadata-Version: 2.1
+Name: gym_pollux
+Version: 0.0.1
+Summary: Custom Gym environment for pollux-AMR
+Author: Your Name
+Requires-Dist: gym>=0.21.0
+Requires-Dist: numpy
