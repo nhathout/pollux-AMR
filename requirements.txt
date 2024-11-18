@@ -1,0 +1,5 @@
+numpy
+gymnasium
+stable-baselines3[extra]
+matplotlib
+pygame
