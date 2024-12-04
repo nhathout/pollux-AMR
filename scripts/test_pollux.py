@@ -1,9 +1,12 @@
+# test_pollux.py
+
 import matplotlib
 matplotlib.use('TkAgg')  # Or another suitable backend
 import matplotlib.pyplot as plt
 
 import gymnasium as gym
-import gym_pollux
+import gym_pollux  # Import this before gym.make()
+
 from stable_baselines3 import PPO, DQN, A2C
 
 def main():
@@ -11,7 +14,7 @@ def main():
     algo = 'PPO'  # Change to 'DQN' or 'A2C' as needed
 
     # Create the environment
-    env = gym.make('PolluxSimpleEnv-v0', render_mode='human')
+    env = gym.make('PolluxSimpleEnv-v0', render_mode='human')  # Use the updated ID
 
     # Load the trained model
     if algo == 'PPO':
@@ -24,7 +27,7 @@ def main():
         raise ValueError(f"Unsupported algorithm: {algo}")
 
     # Run multiple episodes
-    num_episodes = 5
+    num_episodes = 20
     for episode in range(num_episodes):
         obs, info = env.reset()
         done = False
