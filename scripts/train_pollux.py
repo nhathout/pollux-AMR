@@ -14,7 +14,7 @@ from stable_baselines3 import PPO
 def main():
     # Create the environment
     print("Creating environment in train_pollux.py")
-    env = gym.make('PolluxSimpleEnv-v0')  # Ensure the '-v0' suffix is included
+    env = gym.make('PolluxSimpleEnv-v0') 
     print("Environment created in train_pollux.py:", env)
 
     # Initialize the model
