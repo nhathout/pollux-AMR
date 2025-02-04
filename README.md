@@ -41,7 +41,7 @@ Pollux-AMR uses sensor fusion (IMU, ultrasonic modules), motor control (stepper 
    cd pollux-AMR
   ```
 - **Install Dependencies**
-  - ROS2 Noetic: Follow the official ROS installation guide for Ubuntu 20.04.
+  - ROS Noetic: Follow the official ROS installation guide for Ubuntu 20.04.
   - Required packages (assuming ROS2 Noetic installed at ```/opt/ros/noetic``` and you have a ```catkin_ws``` at ```~/catkin_ws```):
     ```bash
     chmod +x setup_env.sh
