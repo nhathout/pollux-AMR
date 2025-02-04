@@ -26,9 +26,9 @@ Pollux-AMR uses sensor fusion (IMU, ultrasonic modules), motor control (stepper 
    - Positioned downward for cliff detection.  
 4. **IPSG Step Motor Driver Boards**  
    - Controls stepper motors (if used instead of DC motors).  
-5. **IPSG 1.3" OLED Display Module**  
+5. **IPSG 1.3" OLED Display**  
    - For real-time status or debug info.  
-6. **Raspberry Pi 4 (4GB)**  
+6. **Raspberry Pi 4 Model B(4GB)**  
    - Core computing platform and ROS node host.  
 7. **Optional Cameras**  
    - Stereo or dual Pi Cameras for advanced obstacle detection or visual RL.
