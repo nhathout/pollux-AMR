@@ -1,5 +1,5 @@
 # pollux-AMR
-![Maintained Badge](https://img.shields.io/badge/maintained-building-yellow)
+![Maintained Badge](https://img.shields.io/badge/maintained-building-yellow)<br>
 An autonomous countertop-cleaning robot with integrated reinforcement learning to prevent falling off cliffs and hitting obstacles.
 
 Pollux-AMR uses sensor fusion (IMU, ultrasonic modules), motor control (stepper drivers), and an OLED display to perform navigation tasks on a Raspberry Pi 4 Model B. The goal is to detect countertop edges (“cliffs”), avoid collisions, and learn from its environment.
