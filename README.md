@@ -41,11 +41,16 @@ Pollux-AMR uses sensor fusion (IMU, ultrasonic modules), motor control (stepper 
    cd pollux-AMR
   ```
 - **Install Dependencies**
-  - Required packages:
-    ```bash
-    pip install -r requirements.txt
-    ```
   - ROS2 Noetic: Follow the official ROS installation guide for Ubuntu 20.04.
+  - Required packages (assuming ROS2 Noetic installed at ```/opt/ros/noetic``` and you have a ```catkin_ws``` at ```~/catkin_ws```):
+    ```bash
+    chmod +x setup_env.sh
+    ./setup_env.sh
+    ```
+- **Install Custom Gym Environment**
+  - ```bash
+    pip install -e gym_pollux
+    ```
 
 ## Contributing
 Please feel free to open GitHub Issues, feature requests, and pull requests :)
