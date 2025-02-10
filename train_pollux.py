@@ -1,7 +1,7 @@
 import gymnasium as gym
 import gym_pollux
-
 from stable_baselines3 import PPO
+import torch
 
 def main():
     # Create the environment
@@ -13,10 +13,13 @@ def main():
     # Train the agent
     model.learn(total_timesteps=700000)
 
-    # Save the trained model
-    model.save("PPO_pollux_amr")
+    # Save in both formats:
+    model.save("PPO_pollux_amr")  # SB3 format
+    torch.save(model.policy.state_dict(), "PPO_pollux_amr.pth")  # PyTorch format
 
-    print("Training completed and model saved.")
+    print("Training completed. Saved:")
+    print("- SB3 model: PPO_pollux_amr.zip")
+    print("- PyTorch weights: PPO_pollux_amr.pth")
 
 if __name__ == "__main__":
     main()
