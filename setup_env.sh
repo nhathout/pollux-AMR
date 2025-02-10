@@ -5,7 +5,7 @@ source /opt/ros/noetic/setup.bash
 source ~/catkin_ws/devel/setup.bash
 
 # Install dependencies
-pip install -r ~/catkin_ws/src/pollux-AMR/requirements.txt
+pip install -r ./requirements.txt
 
 # Reinstall custom Gymnasium environment
-pip install -e ~/catkin_ws/src/pollux-AMR/gym_pollux
+pip install -e ./pollux-AMR/gym_pollux
