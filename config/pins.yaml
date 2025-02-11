@@ -1,1 +1,19 @@
 # GPIO pin configuration
+
+motor_pins:
+  left: [6, 13, 19, 26]
+  right: [12, 16, 20, 21]
+
+ultrasonic_pins:
+  front_left:
+    trig: 3
+    echo: 2
+  front_right:
+    trig: 27
+    echo: 17
+  rear_left:
+    trig: 9
+    echo: 10
+  rear_right:
+    trig: 24
+    echo: 23
