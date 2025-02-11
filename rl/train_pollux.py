@@ -52,15 +52,15 @@ def main():
         device='cpu',
         ent_coef=0.1,
         learning_rate=1e-4,
-        batch_size=32, # 24 might be better on Pi
-        n_steps=512 # 256 might be better on Pi
+        batch_size=24, # was 32
+        n_steps=256 # was 512
     )
 
     # Training with progress saving
     try:
         model.learn(
             total_timesteps=500000,
-            callback=SaveOnBestTrainingRewardCallback(check_freq=1000) # 500 might be better on Pi
+            callback=SaveOnBestTrainingRewardCallback(check_freq=500) # 1000 was before
         )
     except KeyboardInterrupt:
         print("\nTraining interrupted - saving final model...")
