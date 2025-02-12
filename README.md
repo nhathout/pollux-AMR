@@ -55,6 +55,10 @@ Pollux-AMR uses sensor fusion (IMU, ultrasonic modules), motor control (stepper 
 ## Contributing
 Please feel free to open GitHub Issues, feature requests, and pull requests :)
 
+## Appendix
+![trained](trained.png)
+Figure 1: Successful model trained on the Raspberry Pi to prove ability to dynamically train on a Pi 4 Model B.
+
 ## License 
 This Project is licensed under the MIT License. You are free to modify and distribute this code under those terms.
 
