@@ -1,5 +1,5 @@
 numpy>=1.21.2
-gymnasium==0.29.1
+gymnasium>=0.29.1
 stable-baselines3==2.2.1
 matplotlib==3.7.1
 pygame-ce==2.3.1  # Use community edition
