@@ -64,3 +64,7 @@ This Project is licensed under the MIT License. You are free to modify and distr
 
 ## Other (Dev) Notes:
 - ```pollux@pollux:~ $ source ~/pollux-env/bin/activate``` to activate the virtual environment when using the Pi
+
+- ```./src/catkin/bin/catkin_make_isolated --install -DCMAKE_BUILD_TYPE=Release``` is the current command I am stuck on in regards to installing ROS Noetic on the RaspPi 4 Model B
+
+- ```cd /home/pollux/noetic_ws/build_isolated/rosconsole && /home/pollux/noetic_ws/install_isolated/env.sh make``` to recreate the error message from above
