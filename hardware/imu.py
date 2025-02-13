@@ -5,7 +5,7 @@ import time
 
 class IMUController:
     def __init__(self, address=0x68):
-        self.sensor = mpu6050(address)
+        self.sensor = mpu6050.mpu6050(0x68)
         self.calibration_samples = 100
         self._calibrate()
         
