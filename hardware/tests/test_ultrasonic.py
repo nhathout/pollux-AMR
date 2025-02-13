@@ -8,7 +8,7 @@ def test_ultrasonic_sensors():
     print("=== Ultrasonic Sensor Test ===")
     
     # Load config
-    with open('../../config/pins.yaml') as f:
+    with open('../config/pins.yaml') as f: # might have to fix config file or location
         config = yaml.safe_load(f)
     
     array = UltrasonicArray(config['ultrasonic_pins'])
