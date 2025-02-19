@@ -63,8 +63,5 @@ Figure 1: Successful model trained on the Raspberry Pi to prove ability to dynam
 This Project is licensed under the MIT License. You are free to modify and distribute this code under those terms.
 
 ## Other (Dev) Notes:
-- ```pollux@pollux:~ $ source ~/pollux-env/bin/activate``` to activate the virtual environment when using the Pi
-
-- ```./src/catkin/bin/catkin_make_isolated --install -DCMAKE_BUILD_TYPE=Release``` is the current command I am stuck on in regards to installing ROS Noetic on the RaspPi 4 Model B
-
-- ```cd /home/pollux/noetic_ws/build_isolated/rosconsole && /home/pollux/noetic_ws/install_isolated/env.sh make``` to recreate the error message from above
+- Raspberry Pi flashed with Ubuntu 20.04 LTS (no desktop)
+- ROS Noetic successfully installed
