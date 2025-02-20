@@ -68,20 +68,20 @@ This Project is licensed under the MIT License. You are free to modify and distr
 - SSH from a Mac to the Pi for remote development
 
 **Running ROS**
-1. Open a terminal (SSHed into the Pi) and run:
+1. Open a terminal (SSHed into the Pi) and run:<br>
    ```roscore```
 
-2. In another terminal, run the hardware publisher node:
+2. In another terminal, run the hardware publisher node:<br>
    ```rosrun pollux_amr hw_publisher.py```
 
-   - To check sensor data:
-      ```rostopic echo /pollux/imu```
+   - To check sensor data:<br>
+      ```rostopic echo /pollux/imu```<br>
       ```rostopic echo /pollux/ultrasonic```
 
-3. For motors:
+3. For motors:<br>
    ```rosrun pollux_amr motor_cmd_node.py```
 
-   - To publish a command (move the motors):
+   - To publish a command (move the motors):<br>
       ```rostopic pub /pollux/motor_cmd std_msgs/Int32 "data: 0"``` (0 is an attempt to move forward)
 
 *To run individual HW tests on the Pi without ROS (legacy tests):*
