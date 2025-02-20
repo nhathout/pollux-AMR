@@ -1,4 +1,5 @@
-# GPIO pin configuration
+# config/pins.yaml
+# GPIO pin configuration (BCM numbering)
 
 motor_pins:
   left: [6, 13, 19, 26]
@@ -6,8 +7,8 @@ motor_pins:
 
 ultrasonic_pins:
   front_left:
-    trig: 3
-    echo: 2
+    trig: 14
+    echo: 15
   front_right:
     trig: 27
     echo: 17
