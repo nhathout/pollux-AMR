@@ -12,11 +12,11 @@ Pollux-AMR uses sensor fusion (IMU, ultrasonic modules), motor control (stepper 
 - **OLED Display**: Provides real-time status or debug information.
 
 ## Stack Architecture
-1. **Python 3.10.7** – Main language for scripting and orchestration.  
+1. **Python 3.10.7** – Main language for scripting and programming.  
 2. **Stable Baselines3 (SB3)** – Reinforcement learning library built on PyTorch.  
 3. **OpenAI Gymnasium (Gym)** – Standard interface for RL environments and simulations.  
-4. **ROS2 (Robot Operating System) Noetic** – Middleware for inter-node communication and data handling.  
-5. **Development Environment** – Windows 10/11 using WSL2 (Ubuntu 20.04) for convenience.
+4. **ROS (Robot Operating System) Noetic** – Middleware for inter-node communication and data handling.  
+5. **Development Environment** – Was initially Windows 10/11 using WSL2 (Ubuntu 20.04), however now it is SSH from a Mac to the Pi for remote development with the Raspberry Pi flashed with Ubuntu 20.04 LTS (headless).
 
 ## Hardware Components
 1. **Robot Base**  
@@ -27,11 +27,11 @@ Pollux-AMR uses sensor fusion (IMU, ultrasonic modules), motor control (stepper 
    - Positioned downward for cliff detection.  
 4. **IPSG Step Motor Driver Boards**  
    - Controls stepper motors (if used instead of DC motors).  
-5. **IPSG 1.3" OLED Display**  
+5. **IPSG 1.3" OLED Display**  (unconfirmed)
    - For real-time status or debug info.  
 6. **Raspberry Pi 4 Model B(4GB)**  
    - Core computing platform and ROS node host.  
-7. **Optional Cameras**  
+7. **Optional Cameras**  (very highly unlikely)
    - Stereo or dual Pi Cameras for advanced obstacle detection or visual RL.
 
 ## Setup
@@ -63,10 +63,28 @@ Figure 1: Successful model trained on the Raspberry Pi to prove ability to dynam
 This Project is licensed under the MIT License. You are free to modify and distribute this code under those terms.
 
 ## Other (Dev) Notes:
-- Raspberry Pi flashed with Ubuntu 20.04 LTS (no desktop)
+- Raspberry Pi flashed with Ubuntu 20.04 LTS (headless)
 - ROS Noetic successfully installed
+- SSH from a Mac to the Pi for remote development
 
-*To run HW tests on Pi*
+**Running ROS**
+1. Open a terminal (SSHed into the Pi) and run:
+   ```roscore```
+
+2. In another terminal, run the hardware publisher node:
+   ```rosrun pollux_amr hw_publisher.py```
+
+   - To check sensor data:
+      ```rostopic echo /pollux/imu```
+      ```rostopic echo /pollux/ultrasonic```
+
+3. For motors:
+   ```rosrun pollux_amr motor_cmd_node.py```
+
+   - To publish a command (move the motors):
+      ```rostopic pub /pollux/motor_cmd std_msgs/Int32 "data: 0"``` (0 is an attempt to move forward)
+
+*To run individual HW tests on the Pi without ROS (legacy tests):*
 - ```python3 -m pollux-AMR.hardware.tests.test_imu```
 - ```python3 -m pollux-AMR.hardware.tests.test_ultrasonic```
-- ```python3 -m pollux-AMR.hardware.tests.test_motors``` (breaks Pi I think due to too much power consumption by the motors)
+- ```python3 -m pollux-AMR.hardware.tests.test_motors``` (crashes/reboots Pi; I think due to too much power consumption by the motors)
