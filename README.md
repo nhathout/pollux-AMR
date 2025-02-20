@@ -65,3 +65,8 @@ This Project is licensed under the MIT License. You are free to modify and distr
 ## Other (Dev) Notes:
 - Raspberry Pi flashed with Ubuntu 20.04 LTS (no desktop)
 - ROS Noetic successfully installed
+
+*To run HW tests on Pi*
+- ```python3 -m pollux-AMR.hardware.tests.test_imu```
+- ```python3 -m pollux-AMR.hardware.tests.test_ultrasonic```
+- ```python3 -m pollux-AMR.hardware.tests.test_motors``` (breaks Pi I think due to too much power consumption by the motors)
