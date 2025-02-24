@@ -67,7 +67,7 @@ This Project is licensed under the MIT License. You are free to modify and distr
 - ROS Noetic successfully installed
 - SSH from a Mac to the Pi for remote development
 
-**Running Everthing**
+**Running Everthing**<br>
 IMPORTANT Reminder: whenever SSHing into the Raspberry Pi, to utilize ROS and ROS nodes, you must:<br>
 - ```cd catkin_ws/```<br>
 - ```catkin_make```<br>
