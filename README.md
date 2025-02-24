@@ -74,16 +74,16 @@ IMPORTANT Reminder: whenever SSHing into the Raspberry Pi, to utilize ROS and RO
 - ```source devel/setup.bash```<br>
 
 1. Terminal 1:<br>
-   ```roscore```<br><br>
+   ```roscore```<br>
 
 2. Terminal 2:<br>
-   ```rosrun pollux_amr hw_publisher.py```<br><br>
+   ```rosrun pollux_amr hw_publisher.py```<br>
 
 3. Terminal 3:<br>
-   ```rosrun pollux_amr motor_cmd_node.py```<br><br>
+   ```rosrun pollux_amr motor_cmd_node.py```<br>
 
 4. Terminal 4:<br>
-   ```rosrun pollux_amr brain_node.py```<br><br>
+   ```rosrun pollux_amr brain_node.py```<br>
 
 *Running ROS (legacy test)*
 1. Open a terminal (SSHed into the Pi) and run:<br>
