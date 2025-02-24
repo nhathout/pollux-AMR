@@ -29,32 +29,32 @@ def command_callback(msg):
     if command == 0:
         # Move forward ~3 sec
         rospy.loginfo("Moving forward ~3s.")
-        motor_ctrl.move_forward(200, 10)  # steps=200, rpm=10
+        motor_ctrl.move_forward(1000, 10)  # steps=1000, rpm=10
     elif command == 1:
         # Move backward
         rospy.loginfo("Moving backward ~3s.")
-        motor_ctrl.move_backward(200, 10)
+        motor_ctrl.move_backward(1000, 10)
     elif command == 2:
         # Turn left
         rospy.loginfo("Turning left ~3s. (left off, right forward)")
-        # left off => rotate(0), right => forward 200 steps
+        # left off => rotate(0), right => forward 1000 steps
         motor_ctrl.motor_left.rotate(0, 10)   # do nothing
-        motor_ctrl.motor_right.rotate(200, 10)
+        motor_ctrl.motor_right.rotate(1000, 10)
     elif command == 3:
         # Turn right
         rospy.loginfo("Turning right ~3s. (right off, left forward)")
-        motor_ctrl.motor_left.rotate(200, 10)
+        motor_ctrl.motor_left.rotate(1000, 10)
         motor_ctrl.motor_right.rotate(0, 10)
     elif command == 4:
         # Spin left
         rospy.loginfo("Spinning left ~3s. (left backward, right forward)")
-        motor_ctrl.motor_left.rotate(-200, 10)
-        motor_ctrl.motor_right.rotate(200, 10)
+        motor_ctrl.motor_left.rotate(-1000, 10)
+        motor_ctrl.motor_right.rotate(1000, 10)
     elif command == 5:
         # Spin right
         rospy.loginfo("Spinning right ~3s. (left forward, right backward)")
-        motor_ctrl.motor_left.rotate(200, 10)
-        motor_ctrl.motor_right.rotate(-200, 10)
+        motor_ctrl.motor_left.rotate(1000, 10)
+        motor_ctrl.motor_right.rotate(-1000, 10)
     elif command == 6:
         # Stop
         rospy.loginfo("STOP command received. Stopping motors.")
