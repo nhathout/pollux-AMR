@@ -7,100 +7,103 @@ import random
 import rospy
 from std_msgs.msg import Float32MultiArray, Int32
 
-# Dynamically add pollux-AMR folder to PYTHONPATH so we can import shared hardware modules.
 SCRIPT_DIR = os.path.dirname(__file__)
 POLLUX_AMR_DIR = os.path.abspath(os.path.join(SCRIPT_DIR, '../../pollux-AMR'))
 if POLLUX_AMR_DIR not in sys.path:
     sys.path.insert(0, POLLUX_AMR_DIR)
 
-# Parameters and command codes (adjust as needed)
-CLIFF_THRESHOLD = 10.0        # cm; readings above this indicate a potential cliff
-DEBOUNCE_DURATION = 5.0         # seconds to ignore new cliff triggers after one is handled
-
-# Motor command codes (must match what motor_cmd_node.py expects):
-FORWARD_CMD = 0               # continuously move forward
-BACKWARD_CMD = 1              # move backward
-STOP_CMD = 6                  # stop motors
-ROTATE_180_CMD = 7            # rotate 180° (full turn)
-SPIN_ADJUST_LEFT_CMD = 8      # slight spin left (e.g. 20°)
-SPIN_ADJUST_RIGHT_CMD = 9     # slight spin right (e.g. 20°)
-
-# Durations for each action (in seconds)
-BACKWARD_DURATION = 3.0       # duration to move backward
-ROTATE_DURATION = 3.0         # duration for 180° rotation
-ADJUST_DURATION = 1.5         # duration for slight random adjustment
+CLIFF_THRESHOLD = 10.0       # cm - anything above => treat as cliff
+CLIFF_DEBOUNCE = 3.0         # seconds - ignore new cliff triggers for a bit
+SPIN_DURATION = 3.0          # spin for 3s
+FORWARD_CMD = 0              # from motor_cmd_node.py (0 => forward)
+STOP_CMD = 6                 # from motor_cmd_node.py (6 => stop)
+SPIN_LEFT_CMD = 4            # spin left
+SPIN_RIGHT_CMD = 5           # spin right
 
 class BrainNode:
+    """
+    State Machine:
+      - FORWARD: continuously command forward unless we detect a cliff
+      - SPINNING: we do a spin for SPIN_DURATION, ignore new cliffs
+    """
     def __init__(self):
         rospy.init_node('brain_node', anonymous=True)
         rospy.loginfo("brain_node started. Subscribing to /pollux/ultrasonic")
-        
-        # Subscribe to ultrasonic sensor data
-        self.ultra_sub = rospy.Subscriber('/pollux/ultrasonic', Float32MultiArray, self.ultrasonic_callback)
+
+        # Subscribe to ultrasonic Float32MultiArray
+        self.sub = rospy.Subscriber('/pollux/ultrasonic', Float32MultiArray, self.ultrasonic_callback)
         # Publisher for motor commands
         self.cmd_pub = rospy.Publisher('/pollux/motor_cmd', Int32, queue_size=10)
-        
+
         # State variables
-        self.last_event_time = 0.0
-        self.in_action = False
-        
-        # Timer to command forward motion periodically when idle
+        self.state = "FORWARD"
+        self.last_cliff_time = 0.0
+        self.spin_start_time = 0.0
+
+        # Create a timer to periodically publish forward if in FORWARD state
+        # e.g., every 2 seconds
         self.forward_timer = rospy.Timer(rospy.Duration(2.0), self.forward_timer_cb)
-    
+
     def forward_timer_cb(self, event):
-        # If not currently in an avoidance action, command forward motion.
-        if not self.in_action:
-            rospy.loginfo("Brain => Commanding forward motion.")
+        """Called every 2s. If we're in FORWARD state, publish 'move forward'."""
+        if self.state == "FORWARD":
+            rospy.loginfo("Brain => Move forward!")
             self.cmd_pub.publish(Int32(data=FORWARD_CMD))
-    
+
     def ultrasonic_callback(self, msg):
-        # Do nothing if already handling an avoidance sequence.
-        if self.in_action:
-            return
-        
-        current_time = rospy.get_time()
-        # Debounce: if a cliff was handled recently, ignore new triggers.
-        if current_time - self.last_event_time < DEBOUNCE_DURATION:
-            return
-        
         distances = msg.data
-        cliff_detected = False
-        for i, d in enumerate(distances):
-            if d < 0:
-                continue  # sensor disconnected
-            if d > CLIFF_THRESHOLD:
-                rospy.loginfo("Cliff detected on sensor %d: %.2f cm", i, d)
-                cliff_detected = True
-                break
-        
-        if cliff_detected:
-            self.last_event_time = current_time
-            self.in_action = True
-            
-            rospy.loginfo("Brain => STOP motors.")
-            self.cmd_pub.publish(Int32(data=STOP_CMD))
-            rospy.sleep(0.5)
-            
-            rospy.loginfo("Brain => Moving backward for %.1f seconds.", BACKWARD_DURATION)
-            self.cmd_pub.publish(Int32(data=BACKWARD_CMD))
-            rospy.sleep(BACKWARD_DURATION)
-            
-            rospy.loginfo("Brain => Rotating 180° for %.1f seconds.", ROTATE_DURATION)
-            self.cmd_pub.publish(Int32(data=ROTATE_180_CMD))
-            rospy.sleep(ROTATE_DURATION)
-            
-            # Perform a slight random adjustment: spin left or right by a small angle.
-            adjust_cmd = random.choice([SPIN_ADJUST_LEFT_CMD, SPIN_ADJUST_RIGHT_CMD])
-            direction_str = "left" if adjust_cmd == SPIN_ADJUST_LEFT_CMD else "right"
-            rospy.loginfo("Brain => Adjusting spin %s for %.1f seconds.", direction_str, ADJUST_DURATION)
-            self.cmd_pub.publish(Int32(data=adjust_cmd))
-            rospy.sleep(ADJUST_DURATION)
-            
-            rospy.loginfo("Brain => Resuming forward motion.")
-            self.in_action = False
+
+        # Check disconnected:
+        disconnected_sensors = [i for i, d in enumerate(distances) if d < 0]
+        if disconnected_sensors:
+            rospy.logwarn("Some sensor(s) might be disconnected: indices %s", disconnected_sensors)
+
+        # If currently SPINNING, see if spin_time is done
+        if self.state == "SPINNING":
+            elapsed = rospy.get_time() - self.spin_start_time
+            if elapsed >= SPIN_DURATION:
+                rospy.loginfo("Spin complete. Switching to FORWARD state.")
+                self.state = "FORWARD"
+            return  # ignore new cliff triggers while spinning
+
+        # If in FORWARD state, check for cliff
+        # Also check "debounce" -> if less than CLIFF_DEBOUNCE since last cliff
+        if self.state == "FORWARD":
+            if (rospy.get_time() - self.last_cliff_time) < CLIFF_DEBOUNCE:
+                # still in a cooldown; ignore
+                return
+
+            # Detect cliff
+            cliff_detected = False
+            for i, dist in enumerate(distances):
+                # ignore disconnected sensors
+                if dist < 0:
+                    continue
+                if dist > CLIFF_THRESHOLD:
+                    rospy.loginfo("Cliff detected by sensor %d with dist=%.2f", i, dist)
+                    cliff_detected = True
+                    break
+
+            if cliff_detected:
+                self.last_cliff_time = rospy.get_time()
+                # Stop
+                rospy.loginfo("Brain => STOP motors!")
+                self.cmd_pub.publish(Int32(data=STOP_CMD))
+                # Random spin
+                direction = random.choice([SPIN_LEFT_CMD, SPIN_RIGHT_CMD])
+                if direction == SPIN_LEFT_CMD:
+                    rospy.loginfo("Brain => Spin LEFT for %.1fs", SPIN_DURATION)
+                else:
+                    rospy.loginfo("Brain => Spin RIGHT for %.1fs", SPIN_DURATION)
+
+                self.cmd_pub.publish(Int32(data=direction))
+                # Switch to SPINNING
+                self.state = "SPINNING"
+                self.spin_start_time = rospy.get_time()
 
     def run(self):
         rospy.spin()
+
 
 if __name__ == '__main__':
     try:
