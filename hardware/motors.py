@@ -2,6 +2,7 @@
 
 import RPi.GPIO as GPIO
 import time
+import threading
 
 class StepperMotor:
     def __init__(self, pins, steps_per_rev=2038):
@@ -39,19 +40,24 @@ class DualMotorController:
         self.motor_right = StepperMotor(motor_pins['right'])
         
     def move_forward(self, steps, rpm):
-        self.motor_left.rotate(steps, rpm)
-        self.motor_right.rotate(steps, rpm)
+        # Run both motor rotates concurrently.
+        left_thread = threading.Thread(target=self.motor_left.rotate, args=(steps, rpm))
+        right_thread = threading.Thread(target=self.motor_right.rotate, args=(steps, rpm))
+        left_thread.start()
+        right_thread.start()
+        left_thread.join()
+        right_thread.join()
         
     def move_backward(self, steps, rpm):
         self.move_forward(-steps, rpm)
         
     def turn_left(self, degrees, rpm):
         steps = int(degrees * self.motor_left.steps_per_rev / 360)
-        self.motor_left.rotate(-steps, rpm)
         self.motor_right.rotate(steps, rpm)
         
     def turn_right(self, degrees, rpm):
-        self.turn_left(-degrees, rpm)
+        steps = int(degrees * self.motor_left.steps_per_rev / 360)
+        self.motor_left.rotate(steps, rpm)
         
     def cleanup(self):
         GPIO.cleanup()
