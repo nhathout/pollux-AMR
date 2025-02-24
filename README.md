@@ -66,14 +66,24 @@ This Project is licensed under the MIT License. You are free to modify and distr
 - Raspberry Pi flashed with Ubuntu 20.04 LTS (headless)
 - ROS Noetic successfully installed
 - SSH from a Mac to the Pi for remote development
+- **To change the WiFi network** that the Pi tries to connect to automatically:<br>
+  - ```sudo vim /etc/netplan/50-cloud-init.yaml```<br>
+  - Change the SSID and password, then apply changes:<br>
+  - ```sudo netplan apply```<br>
 
-**Getting Started:**
+  - **Verifying Connection:**
+       - ```ip addr show wlan0```
+       - ```ping google.com```
+  
+
+## Getting Started:
 just turn on the Pi!
 (added script to our Pi that runs all the ros nodes below)
 
-Note: use ```journalctl -u pollux-robot.service -f``` for live logging details when SSHing
+Note: use ```journalctl -u pollux-robot.service -f``` for live logging details when SSHing<br>
+OR Run all nodes in the foreground with roslaunch: ```roslaunch pollux_amr all.launch```
 
-<br><br>
+<br><br><br>
 *Running Everthing (legacy test unless using your own RaspPi)* <br>
 IMPORTANT Reminder: whenever SSHing into the Raspberry Pi, to utilize ROS and ROS nodes, you must:<br>
 - ```cd catkin_ws/```<br>
