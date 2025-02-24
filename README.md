@@ -67,7 +67,14 @@ This Project is licensed under the MIT License. You are free to modify and distr
 - ROS Noetic successfully installed
 - SSH from a Mac to the Pi for remote development
 
-**Running Everthing**<br>
+**Getting Started:**
+just turn on the Pi!
+(added script to our Pi that runs all the ros nodes below)
+
+Note: use ```journalctl -u pollux-robot.service -f``` for live logging details when SSHing
+
+<br><br>
+*Running Everthing (legacy test unless using your own RaspPi)* <br>
 IMPORTANT Reminder: whenever SSHing into the Raspberry Pi, to utilize ROS and ROS nodes, you must:<br>
 - ```cd catkin_ws/```<br>
 - ```catkin_make```<br>
@@ -84,7 +91,7 @@ IMPORTANT Reminder: whenever SSHing into the Raspberry Pi, to utilize ROS and RO
 
 4. Terminal 4:<br>
    ```rosrun pollux_amr brain_node.py```<br>
-<br><br><br><br>
+<br><br>
 *Running ROS (legacy test)*
 1. Open a terminal (SSHed into the Pi) and run:<br>
    ```roscore```
