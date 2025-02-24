@@ -85,6 +85,10 @@ IMPORTANT Reminder: whenever SSHing into the Raspberry Pi, to utilize ROS and RO
 4. Terminal 4:<br>
    ```rosrun pollux_amr brain_node.py```<br>
 
+
+
+
+
 *Running ROS (legacy test)*
 1. Open a terminal (SSHed into the Pi) and run:<br>
    ```roscore```
