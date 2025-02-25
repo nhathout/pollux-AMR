@@ -15,7 +15,7 @@ if POLLUX_AMR_DIR not in sys.path:
 
 # Parameters and command codes (adjust as needed)
 CLIFF_THRESHOLD = 15.0        # cm; readings above this indicate a potential cliff
-DEBOUNCE_DURATION = 5.0         # seconds to ignore new cliff triggers after one is handled
+DEBOUNCE_DURATION = 10.0         # seconds to ignore new cliff triggers after one is handled
 
 # Motor command codes (must match what motor_cmd_node.py expects):
 FORWARD_CMD = 0               # continuously move forward
