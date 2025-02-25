@@ -58,7 +58,7 @@ def command_callback(msg):
         pass
     elif command == 7:
         rospy.loginfo("Rotating 180° (~3s).")
-        left_thread = threading.Thread(target=motor_ctrl.motor_left.rotate, args=(-3000, 4))
+        left_thread = threading.Thread(target=motor_ctrl.motor_left.rotate, args=(3000, 4))
         right_thread = threading.Thread(target=motor_ctrl.motor_right.rotate, args=(3000, 4))
         left_thread.start()
         right_thread.start()
