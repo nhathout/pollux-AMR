@@ -13,7 +13,7 @@ if POLLUX_AMR_DIR not in sys.path:
 
 
 # Parameters
-TILT_THRESHOLD = 20         # degrees; if exceeded, assume the robot is being tilted upside down
+ANGULAR_VELOCITY_THRESHOLD = 50         # degrees per second; if exceeded, assume the robot is being tilted upside down
 DEBOUNCE_DURATION = 3.0     # seconds to ignore new events after one is handled
 
 # Motor and LED command codes
@@ -28,3 +28,27 @@ class led_gyro_node:
         rospy.loginfo("led_gyro_node started. Subscribing to /pollux/imu")
 
         # subscribe to gyroscope sensor data
+        self.imu_sub = rospy.Subscriber('/pollux/imu',Float32MultiArray, self.imu_callback)
+
+        # Publishers for motor and LED commands
+        self.cmd_pub = rospy.Publisher('/pollux/motor_cmd', Int32, queue_size=10)
+        self.led_pub = rospy.Publisher('/pollux/led_cmd', Int32, queue_size=10)
+
+        # State variables
+        self.last_event_time = 0.0
+        self.in_action = False
+
+    def gyroscope_callback(self, msg):
+        if self.in_action:
+            return
+
+        current_time = rospy.get_time()
+        if current_time - self.last_event_time < DEBOUNCE_DURATION:
+            return
+
+
+        #check with noah if this is how to receive the velocities from the imu
+        angular_velocities = msg.data  # Expecting [X, Y, Z] values
+        if len(angular_velocities) != 3:
+            rospy.logwarn("Unexpected gyroscope data format!")
+            return
