@@ -41,7 +41,7 @@ class DualMotorController:
         
     def move_forward(self, steps, rpm):
         # Run both motor rotates concurrently.
-        left_thread = threading.Thread(target=self.motor_left.rotate, args=(steps, rpm))
+        left_thread = threading.Thread(target=self.motor_left.rotate, args=(-steps, rpm))
         right_thread = threading.Thread(target=self.motor_right.rotate, args=(steps, rpm))
         left_thread.start()
         right_thread.start()
