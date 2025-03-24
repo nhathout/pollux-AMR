@@ -15,20 +15,20 @@ if POLLUX_AMR_DIR not in sys.path:
 
 # Parameters and command codes (adjust as needed)
 CLIFF_THRESHOLD = 15.0        # cm; readings above this indicate a potential cliff
-DEBOUNCE_DURATION = 10.0         # seconds to ignore new cliff triggers after one is handled
+DEBOUNCE_DURATION = 10.0      # seconds to ignore new cliff triggers after one is handled
 
 # Motor command codes (must match what motor_cmd_node.py expects):
-FORWARD_CMD = 0               # continuously move forward
-BACKWARD_CMD = 1              # move backward
-STOP_CMD = 6                  # stop motors
-ROTATE_180_CMD = 7            # rotate 180° (full turn)
-SPIN_ADJUST_LEFT_CMD = 8      # slight spin left (e.g. 20°)
-SPIN_ADJUST_RIGHT_CMD = 9     # slight spin right (e.g. 20°)
+FORWARD_CMD            = 0  # continuously move forward
+BACKWARD_CMD           = 1  # move backward
+STOP_CMD               = 6  # stop motors
+ROTATE_180_CMD         = 7  # rotate 180° (full turn)
+SPIN_ADJUST_LEFT_CMD   = 8  # slight spin left (~20°)
+SPIN_ADJUST_RIGHT_CMD  = 9  # slight spin right (~20°)
 
-# Durations for each action (in seconds)
-BACKWARD_DURATION = 3.0       # duration to move backward
-ROTATE_DURATION = 3.0         # duration for 180° rotation
-ADJUST_DURATION = 1.5         # duration for slight random adjustment
+# Some baseline durations (in seconds) — we will randomize these below
+BACKWARD_DURATION = 3.0      # was fixed; now we’ll randomize around this
+ROTATE_DURATION   = 3.0
+ADJUST_DURATION   = 1.5      # was fixed; we’ll randomize it for variety
 
 class BrainNode:
     def __init__(self):
@@ -67,7 +67,8 @@ class BrainNode:
         cliff_detected = False
         for i, d in enumerate(distances):
             if d < 0:
-                continue  # sensor disconnected
+                # sensor disconnected or invalid
+                continue
             if d > CLIFF_THRESHOLD:
                 rospy.loginfo("Cliff detected on sensor %d: %.2f cm", i, d)
                 cliff_detected = True
@@ -77,24 +78,34 @@ class BrainNode:
             self.last_event_time = current_time
             self.in_action = True
             
+            # Stop motors
             rospy.loginfo("Brain => STOP motors.")
             self.cmd_pub.publish(Int32(data=STOP_CMD))
             rospy.sleep(0.5)
             
-            rospy.loginfo("Brain => Moving backward for %.1f seconds.", BACKWARD_DURATION)
+            # Move backward for a RANDOM duration between ~2–4 seconds
+            back_time = random.uniform(2.0, 4.0)
+            rospy.loginfo("Brain => Moving backward for %.1f seconds.", back_time)
             self.cmd_pub.publish(Int32(data=BACKWARD_CMD))
-            rospy.sleep(BACKWARD_DURATION)
+            rospy.sleep(back_time)
             
+            # Rotate 180°
             rospy.loginfo("Brain => Rotating 180° for %.1f seconds.", ROTATE_DURATION)
             self.cmd_pub.publish(Int32(data=ROTATE_180_CMD))
             rospy.sleep(ROTATE_DURATION)
             
-            # Perform a slight random adjustment: spin left or right by a small angle.
-            adjust_cmd = random.choice([SPIN_ADJUST_LEFT_CMD, SPIN_ADJUST_RIGHT_CMD])
-            direction_str = "left" if adjust_cmd == SPIN_ADJUST_LEFT_CMD else "right"
-            rospy.loginfo("Brain => Adjusting spin %s for %.1f seconds.", direction_str, ADJUST_DURATION)
-            self.cmd_pub.publish(Int32(data=adjust_cmd))
-            rospy.sleep(ADJUST_DURATION)
+            # Perform 1–2 random spin adjustments, each 1–2 seconds in duration
+            num_spins = random.randint(1, 2)
+            for spin_index in range(num_spins):
+                # Randomly choose left or right spin
+                adjust_cmd = random.choice([SPIN_ADJUST_LEFT_CMD, SPIN_ADJUST_RIGHT_CMD])
+                direction_str = "left" if adjust_cmd == SPIN_ADJUST_LEFT_CMD else "right"
+                spin_time = random.uniform(1.0, 2.0)
+                
+                rospy.loginfo("Brain => Adjusting spin %s for %.1f seconds (spin #%d).",
+                              direction_str, spin_time, spin_index+1)
+                self.cmd_pub.publish(Int32(data=adjust_cmd))
+                rospy.sleep(spin_time)
             
             rospy.loginfo("Brain => Resuming forward motion.")
             self.in_action = False
