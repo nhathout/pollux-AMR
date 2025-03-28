@@ -83,8 +83,8 @@ class BrainNode:
             self.cmd_pub.publish(Int32(data=STOP_CMD))
             rospy.sleep(0.5)
             
-            # Move backward for a RANDOM duration between ~2–4 seconds
-            back_time = random.uniform(2.0, 4.0)
+            # Move backward for a RANDOM duration between ~1–2 seconds
+            back_time = random.uniform(1.0, 2.0)
             rospy.loginfo("Brain => Moving backward for %.1f seconds.", back_time)
             self.cmd_pub.publish(Int32(data=BACKWARD_CMD))
             rospy.sleep(back_time)
