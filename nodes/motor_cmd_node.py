@@ -88,9 +88,9 @@ if __name__ == '__main__':
 
     # Updated pins for new prototype
     motor_pins = {
-        'left':  [26, 19, 13, 6],   # IN1=26, IN2=19, IN3=13, IN4=6
-        'right': [21, 20, 16, 12]   # IN1=21, IN2=20, IN3=16, IN4=12
-    }
+        'left':  [19, 26, 13, 6],   # IN1/IN2 swapped
+        'right': [20, 21, 16, 12],  # IN1/IN2 swapped
+    }   
 
     motor_ctrl = motors.DualMotorController(motor_pins)
 
