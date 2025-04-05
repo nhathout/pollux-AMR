@@ -2,19 +2,27 @@
 # GPIO pin configuration (BCM numbering)
 
 motor_pins:
-  left: [6, 13, 19, 26]
-  right: [12, 16, 20, 21]
+  left:  [26, 19, 13, 6]    # IN1=26, IN2=19, IN3=13, IN4=6
+  right: [21, 20, 16, 12]   # IN1=21, IN2=20, IN3=16, IN4=12
 
 ultrasonic_pins:
-  front_left:
-    trig: 14
-    echo: 15
-  front_right:
-    trig: 27
-    echo: 17
-  rear_left:
-    trig: 9
-    echo: 10
-  rear_right:
-    trig: 24
-    echo: 23
+  top_left:
+    trig: 17
+    echo: 4
+  top_right:
+    trig: 22
+    echo: 27
+  bottom_left:
+    trig: 23
+    echo: 18
+  bottom_mid:
+    trig: 25
+    echo: 24
+  bottom_right:
+    trig: 7
+    echo: 8
+
+led_pins:
+  sanitize: 10      # UVC LED
+  robot_on: 9       # ON/OFF LED
+  indicator: 11     # Indicator LED

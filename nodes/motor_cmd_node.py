@@ -86,11 +86,12 @@ def command_callback(msg):
 if __name__ == '__main__':
     rospy.init_node('motor_cmd_node')
 
-    # Initialize motor pins
+    # Updated pins for new prototype
     motor_pins = {
-        'left': [6, 13, 19, 26],
-        'right': [12, 16, 20, 21]
+        'left':  [26, 19, 13, 6],   # IN1=26, IN2=19, IN3=13, IN4=6
+        'right': [21, 20, 16, 12]   # IN1=21, IN2=20, IN3=16, IN4=12
     }
+
     motor_ctrl = motors.DualMotorController(motor_pins)
 
     rospy.Subscriber('/pollux/motor_cmd', Int32, command_callback)
