@@ -54,61 +54,57 @@ class BrainNode:
             self.cmd_pub.publish(Int32(data=FORWARD_CMD))
     
     def ultrasonic_callback(self, msg):
-        # Do nothing if already handling an avoidance sequence.
         if self.in_action:
             return
-        
+
         current_time = rospy.get_time()
-        # Debounce: if a cliff was handled recently, ignore new triggers.
         if current_time - self.last_event_time < DEBOUNCE_DURATION:
             return
-        
-        distances = msg.data
+
+        distances = list(msg.data)
+        if len(distances) != 3:
+            rospy.logwarn("brain_node: expected 3 bottom sensors, got %d", len(distances))
+            return
+
+        # 0=left, 1=mid, 2=right
         cliff_detected = False
-        for i, d in enumerate(distances):
-            if d < 0:
-                # sensor disconnected or invalid
+        for idx, d in enumerate(distances):
+            if d < 0:        # sensor error
                 continue
             if d > CLIFF_THRESHOLD:
-                rospy.loginfo("Cliff detected on sensor %d: %.2f cm", i, d)
+                rospy.loginfo("Cliff on bottom sensor %d (%.1f cm)", idx, d)
                 cliff_detected = True
                 break
-        
-        if cliff_detected:
-            self.last_event_time = current_time
-            self.in_action = True
-            
-            # Stop motors
-            rospy.loginfo("Brain => STOP motors.")
-            self.cmd_pub.publish(Int32(data=STOP_CMD))
-            rospy.sleep(0.5)
-            
-            # Move backward for a RANDOM duration between ~1–2 seconds
-            back_time = random.uniform(1.0, 2.0)
-            rospy.loginfo("Brain => Moving backward for %.1f seconds.", back_time)
-            self.cmd_pub.publish(Int32(data=BACKWARD_CMD))
-            rospy.sleep(back_time)
-            
-            # Rotate 180°
-            rospy.loginfo("Brain => Rotating 180° for %.1f seconds.", ROTATE_DURATION)
-            self.cmd_pub.publish(Int32(data=ROTATE_180_CMD))
-            rospy.sleep(ROTATE_DURATION)
-            
-            # Perform 1–2 random spin adjustments, each 1–2 seconds in duration
-            num_spins = random.randint(1, 2)
-            for spin_index in range(num_spins):
-                # Randomly choose left or right spin
-                adjust_cmd = random.choice([SPIN_ADJUST_LEFT_CMD, SPIN_ADJUST_RIGHT_CMD])
-                direction_str = "left" if adjust_cmd == SPIN_ADJUST_LEFT_CMD else "right"
-                spin_time = random.uniform(1.0, 2.0)
-                
-                rospy.loginfo("Brain => Adjusting spin %s for %.1f seconds (spin #%d).",
-                              direction_str, spin_time, spin_index+1)
-                self.cmd_pub.publish(Int32(data=adjust_cmd))
-                rospy.sleep(spin_time)
-            
-            rospy.loginfo("Brain => Resuming forward motion.")
-            self.in_action = False
+
+        if not cliff_detected:
+            return
+
+        # ---- avoidance sequence (unchanged logic) ----
+        self.last_event_time = current_time
+        self.in_action       = True
+
+        rospy.loginfo("Brain => STOP")
+        self.cmd_pub.publish(Int32(data=STOP_CMD))
+        rospy.sleep(0.5)
+
+        back_time = random.uniform(1.0, 2.0)
+        rospy.loginfo("Brain => BACKWARD %.1fs", back_time)
+        self.cmd_pub.publish(Int32(data=BACKWARD_CMD))
+        rospy.sleep(back_time)
+
+        rospy.loginfo("Brain => ROTATE 180° %.1fs", ROTATE_DURATION)
+        self.cmd_pub.publish(Int32(data=ROTATE_180_CMD))
+        rospy.sleep(ROTATE_DURATION)
+
+        for spin_idx in range(random.randint(1, 2)):
+            cmd  = random.choice([SPIN_ADJUST_LEFT_CMD, SPIN_ADJUST_RIGHT_CMD])
+            secs = random.uniform(1.0, 2.0)
+            rospy.loginfo("Brain => spin %s %.1fs", "L" if cmd==SPIN_ADJUST_LEFT_CMD else "R", secs)
+            self.cmd_pub.publish(Int32(data=cmd))
+            rospy.sleep(secs)
+
+        rospy.loginfo("Brain => done, resume forward")
+        self.in_action = False
 
     def run(self):
         rospy.spin()
