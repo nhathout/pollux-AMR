@@ -1,28 +1,16 @@
 # config/pins.yaml
-# GPIO pin configuration (BCM numbering)
-
 motor_pins:
-  left:  [19, 26, 13, 6]    # swapped IN1 <-> IN2
-  right: [20, 21, 16, 12]   # swapped IN1 <-> IN2
+  left:  [6, 13, 19, 26]      # back to IN1,IN2,IN3,IN4
+  right: [12, 16, 20, 21]
 
-ultrasonic_pins:
-  top_left:
-    trig: 17
-    echo: 4
-  top_right:
-    trig: 22
-    echo: 27
-  bottom_left:
-    trig: 23
-    echo: 18
-  bottom_mid:
-    trig: 25
-    echo: 24
-  bottom_right:
-    trig: 7
-    echo: 8
+ultrasonic_pins:           # (unchanged)
+  top_left:     {trig: 17, echo: 4}
+  top_right:    {trig: 22, echo: 27}
+  bottom_left:  {trig: 23, echo: 18}
+  bottom_mid:   {trig: 25, echo: 24}
+  bottom_right: {trig: 7,  echo: 8}
 
-led_pins:
-  sanitize: 10      # UVC LED
-  robot_on: 9       # ON/OFF LED
-  indicator: 11     # Indicator LED
+led_pins:                  # (unchanged)
+  sanitize: 10
+  robot_on: 9
+  indicator: 11
