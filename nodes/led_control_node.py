@@ -29,8 +29,9 @@ class LEDControllerNode:
             GPIO.setup(pin, GPIO.OUT)
 
         # PWM for ON‑LED
-        self.on_pwm = GPIO.PWM(ROBOT_ON_LED_PIN, 1000)
-        self.on_pwm.start(100)                       # full bright at power‑up
+        self.on_pwm = GPIO.PWM(ROBOT_ON_LED_PIN, 1000)   # still available for DIM
+        GPIO.output(ROBOT_ON_LED_PIN, GPIO.HIGH)         # bright by default
+        self.on_pwm_started = False
 
         rospy.Subscriber('/pollux/led_cmd', Int32, self.cb)
         rospy.loginfo("led_control_node ready (ON‑LED bright).")
@@ -47,11 +48,16 @@ class LEDControllerNode:
             GPIO.output(INDICATOR_LED_PIN, GPIO.LOW)
             rospy.loginfo("Sanitize+Indicator OFF")
         elif cmd == ROBOT_ON_DIM:
-            self.on_pwm.ChangeDutyCycle(30)
-            rospy.loginfo("ON‑LED dim")
+            if not self.on_pwm_started:
+                self.on_pwm.start(30)          # 30 % duty
+                self.on_pwm_started = True
+            else:
+                self.on_pwm.ChangeDutyCycle(30)
         elif cmd == ROBOT_ON_BRIGHT:
-            self.on_pwm.ChangeDutyCycle(100)
-            rospy.loginfo("ON‑LED bright")
+            if self.on_pwm_started:
+                self.on_pwm.stop()
+                self.on_pwm_started = False
+            GPIO.output(ROBOT_ON_LED_PIN, GPIO.HIGH)
         else:
             rospy.logwarn("Unknown LED cmd %d", cmd)
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import os, sys, rospy, math
+import os, sys, math, rospy
 from sensor_msgs.msg import Imu
 from std_msgs.msg  import Int32
 
@@ -8,39 +8,46 @@ POLLUX_AMR_DIR = os.path.abspath(os.path.join(SCRIPT_DIR, '../../pollux-AMR/hard
 if POLLUX_AMR_DIR not in sys.path:
     sys.path.insert(0, POLLUX_AMR_DIR)
 
-# --- LED commands ---
+# LED commands
 SANITIZE_OFF    = 0
 SANITIZE_ON     = 1
 ROBOT_ON_BRIGHT = 3
 
-# --- motor command we care about ---
-STOP_CMD = 6
+# Motor commands
+STOP_CMD        = 6
 
-# --- thresholds ---
-ANG_VEL_DEG_S  = 50.0     # tilt / jerk threshold
-DEBOUNCE_SECS  = 2.0
+# Tilt / jerk detection
+ANG_VEL_LIMIT_DEG_S = 120.0      # less sensitive
+MOTION_MIN_TIME     = 0.25       # must exceed limit for ≥ this long
+QUIET_TIME_REENABLE = 3.0        # seconds of calm before auto‑re‑enable
+DEBOUNCE_SECS       = 1.0
 
 class LedGyroNode:
     def __init__(self):
         rospy.init_node('led_gyro_node', anonymous=True)
 
-        self.led_pub   = rospy.Publisher('/pollux/led_cmd', Int32, queue_size=10)
-        self.last_tilt = 0.0
-        self.sanitize  = False
+        self.led_pub    = rospy.Publisher('/pollux/led_cmd', Int32, queue_size=5)
+        self.sanitize   = False
+        self.last_tilt  = 0.0
+        self.tilt_start = None
+        self.last_motion_cmd = STOP_CMD
 
-        # Subscribe to IMU and motor commands
-        rospy.Subscriber('/pollux/imu',        Imu,  self.imu_cb)
-        rospy.Subscriber('/pollux/motor_cmd',  Int32, self.motor_cb)
+        rospy.Subscriber('/pollux/imu',       Imu,  self.imu_cb)
+        rospy.Subscriber('/pollux/motor_cmd', Int32, self.motor_cb)
 
-        # Make sure ON‑LED is bright even if control node started first
-        rospy.sleep(0.3)                       # tiny delay so publisher is ready
+        # Bright ON‑LED on boot
+        rospy.sleep(0.3)
         self.led_pub.publish(ROBOT_ON_BRIGHT)
 
-        rospy.loginfo("led_gyro_node running.")
+        # Timer to auto‑re‑enable sanitize after calm
+        rospy.Timer(rospy.Duration(0.5), self.reenable_timer)
+
+        rospy.loginfo("led_gyro_node ready.")
         rospy.spin()
 
-    # ---------- motor command callback ----------
+    # ---------- motor cmd ----------
     def motor_cb(self, msg):
+        self.last_motion_cmd = msg.data
         if msg.data == STOP_CMD:
             if self.sanitize:
                 self.led_pub.publish(SANITIZE_OFF)
@@ -50,23 +57,36 @@ class LedGyroNode:
                 self.led_pub.publish(SANITIZE_ON)
                 self.sanitize = True
 
-    # ---------- IMU callback ----------
+    # ---------- IMU ----------
     def imu_cb(self, imu):
-        now = rospy.get_time()
-        if now - self.last_tilt < DEBOUNCE_SECS:
-            return
-
-        # rad/s → deg/s
         av = imu.angular_velocity
-        ax = abs(av.x) * 180.0 / math.pi
-        ay = abs(av.y) * 180.0 / math.pi
-        az = abs(av.z) * 180.0 / math.pi
+        deg_s = max(abs(av.x), abs(av.y), abs(av.z)) * 180.0 / math.pi
 
-        if max(ax, ay, az) > ANG_VEL_DEG_S:
-            rospy.logwarn("Tilt/jerk detected (%.0f/%.0f/%.0f deg/s) → Sanitize OFF", ax, ay, az)
-            self.led_pub.publish(SANITIZE_OFF)
-            self.sanitize  = False
-            self.last_tilt = now
+        now = rospy.get_time()
+        if deg_s > ANG_VEL_LIMIT_DEG_S:
+            # start or continue a tilt interval
+            if self.tilt_start is None:
+                self.tilt_start = now
+            elif (now - self.tilt_start) >= MOTION_MIN_TIME:
+                if now - self.last_tilt > DEBOUNCE_SECS:
+                    rospy.logwarn("Tilt/jerk detected (%.0f deg/s) – sanitize OFF", deg_s)
+                    self.led_pub.publish(SANITIZE_OFF)
+                    self.sanitize  = False
+                    self.last_tilt = now
+        else:
+            self.tilt_start = None   # reset counter
+
+    # ---------- timer to re‑enable ----------
+    def reenable_timer(self, _):
+        if self.sanitize:
+            return
+        # no sanitize right now
+        if (rospy.get_time() - self.last_tilt) < QUIET_TIME_REENABLE:
+            return
+        if self.last_motion_cmd != STOP_CMD:
+            rospy.loginfo("IMU calm – sanitize back ON")
+            self.led_pub.publish(SANITIZE_ON)
+            self.sanitize = True
 
 if __name__ == '__main__':
     try:
