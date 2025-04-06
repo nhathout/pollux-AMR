@@ -31,6 +31,10 @@ class LEDControllerNode:
         # Drive ON‑LED directly (no PWM) to stay bright
         GPIO.output(ROBOT_ON_LED_PIN, GPIO.HIGH)
 
+        # turn on on/off LED
+        GPIO.output(ROBOT_ON_LED_PIN, GPIO.HIGH)
+        rospy.loginfo("Robot On LED: BRIGHT")
+
         rospy.Subscriber('/pollux/led_cmd', Int32, self.cb)
         rospy.loginfo("led_control_node ready (ON‑LED steady bright).")
         rospy.spin()
@@ -48,7 +52,7 @@ class LEDControllerNode:
         elif cmd == ROBOT_ON_DIM:
             # Not used—keep ON at full brightness
             rospy.loginfo("ROBOT_ON_DIM command ignored; using steady brightness")
-        elif cmd == ROBOT_ON_BRIGHT:
+        elif cmd == ROBOT_ON_BRIGHT: # should be automatically done above
             GPIO.output(ROBOT_ON_LED_PIN, GPIO.HIGH)
             rospy.loginfo("Robot On LED: BRIGHT")
         else:

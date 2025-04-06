@@ -17,7 +17,7 @@ ROBOT_ON_BRIGHT = 3
 TILT_LIMIT_DEG      = 60.0      # Robot is considered safe if tilt is below 60°
 ANG_VEL_LIMIT       = 10.0      # Robot is considered safe if angular velocity magnitude is below 10.0 (e.g., rad/s)
 SAFE_DELAY_SECS     = 0       # Must be safe for 0.5 s before enabling the UV/indicator LED
-UNSAFE_DELAY_SECS   = 0.3       # Must be unsafe for 0.3 s before turning off the UV/indicator LED
+UNSAFE_DELAY_SECS   = 1       # Must be unsafe for 0.3 s before turning off the UV/indicator LED
 CHECK_PERIOD        = 1      # Timer callback period (more frequent for hysteresis)
 
 class LedGyroNode:
@@ -40,8 +40,9 @@ class LedGyroNode:
         rospy.Subscriber('/pollux/imu', Imu, self.imu_cb)
 
         # At startup, send the robot_on_bright command once.
-        self.led_pub.publish(Int32(data=ROBOT_ON_BRIGHT))
-        rospy.loginfo("Sent ROBOT_ON_BRIGHT command.")
+        #rospy.sleep(0.5)
+        #self.led_pub.publish(Int32(data=ROBOT_ON_BRIGHT))
+        #rospy.loginfo("Sent ROBOT_ON_BRIGHT command.")
 
         # Set the initial UV/indicator LED state to ON.
         self.uv_on = True
