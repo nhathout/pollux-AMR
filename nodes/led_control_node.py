@@ -7,24 +7,28 @@ POLLUX_AMR_DIR = os.path.abspath(os.path.join(SCRIPT_DIR, '../../pollux-AMR/hard
 if POLLUX_AMR_DIR not in sys.path:
     sys.path.insert(0, POLLUX_AMR_DIR)
 
-SANITIZE_LED_PIN  = 10   # UVC strip
-ROBOT_ON_LED_PIN  = 9    # “power” LED
-INDICATOR_LED_PIN = 11   # green indicator
+# --- GPIO pins ---
+SANITIZE_LED_PIN  = 10   # UV LED strip
+ROBOT_ON_LED_PIN  = 9    # “robot on” indicator LED
+INDICATOR_LED_PIN = 11   # should follow sanitize
 
+# --- command codes ---
 SANITIZE_OFF    = 0
 SANITIZE_ON     = 1
-ROBOT_ON_DIM    = 2      # not used anymore, kept for compatibility
+ROBOT_ON_DIM    = 2   # not used anymore
 ROBOT_ON_BRIGHT = 3
 
-class LEDController:
+class LEDControllerNode:
     def __init__(self):
-        rospy.init_node('led_control_node')
+        rospy.init_node('led_control_node', anonymous=True)
         GPIO.setmode(GPIO.BCM)
         GPIO.setwarnings(False)
-        for p in (SANITIZE_LED_PIN, ROBOT_ON_LED_PIN, INDICATOR_LED_PIN):
-            GPIO.setup(p, GPIO.OUT)
 
-        # ON‑LED solid bright for whole session
+        # Set up all LED pins as outputs
+        for pin in (SANITIZE_LED_PIN, ROBOT_ON_LED_PIN, INDICATOR_LED_PIN):
+            GPIO.setup(pin, GPIO.OUT)
+
+        # Drive ON‑LED directly (no PWM) to stay bright
         GPIO.output(ROBOT_ON_LED_PIN, GPIO.HIGH)
 
         rospy.Subscriber('/pollux/led_cmd', Int32, self.cb)
@@ -32,15 +36,31 @@ class LEDController:
         rospy.spin()
 
     def cb(self, msg):
-        if msg.data == SANITIZE_ON:
+        cmd = msg.data
+        if   cmd == SANITIZE_ON:
             GPIO.output(SANITIZE_LED_PIN,  GPIO.HIGH)
             GPIO.output(INDICATOR_LED_PIN, GPIO.HIGH)
-        elif msg.data == SANITIZE_OFF:
+            rospy.loginfo("Sanitize+Indicator ON")
+        elif cmd == SANITIZE_OFF:
             GPIO.output(SANITIZE_LED_PIN,  GPIO.LOW)
             GPIO.output(INDICATOR_LED_PIN, GPIO.LOW)
+            rospy.loginfo("Sanitize+Indicator OFF")
+        elif cmd == ROBOT_ON_DIM:
+            # Not used—keep ON at full brightness
+            rospy.loginfo("ROBOT_ON_DIM command ignored; using steady brightness")
+        elif cmd == ROBOT_ON_BRIGHT:
+            GPIO.output(ROBOT_ON_LED_PIN, GPIO.HIGH)
+            rospy.loginfo("Robot On LED: BRIGHT")
+        else:
+            rospy.logwarn("Unknown LED cmd %d", cmd)
+
+    def cleanup(self):
+        GPIO.cleanup()
 
 if __name__ == '__main__':
     try:
-        LEDController()
+        node = LEDControllerNode()
+    except rospy.ROSInterruptException:
+        pass
     finally:
-        GPIO.cleanup()
+        node.cleanup()
