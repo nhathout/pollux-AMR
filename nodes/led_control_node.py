@@ -28,10 +28,6 @@ class LEDControllerNode:
         for pin in (SANITIZE_LED_PIN, ROBOT_ON_LED_PIN, INDICATOR_LED_PIN):
             GPIO.setup(pin, GPIO.OUT)
 
-        # Drive ON‑LED directly (no PWM) to stay bright
-        GPIO.output(ROBOT_ON_LED_PIN, GPIO.HIGH)
-        rospy.loginfo("Robot On LED: BRIGHT")
-
         rospy.Subscriber('/pollux/led_cmd', Int32, self.cb)
         rospy.loginfo("led_control_node ready (ON‑LED steady bright).")
         rospy.spin()
