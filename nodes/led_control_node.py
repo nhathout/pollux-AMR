@@ -1,9 +1,5 @@
 #!/usr/bin/env python3
-
-import os
-import sys
-import rospy
-import RPi.GPIO as GPIO
+import os, sys, rospy, RPi.GPIO as GPIO
 from std_msgs.msg import Int32
 
 SCRIPT_DIR = os.path.dirname(__file__)
@@ -11,85 +7,60 @@ POLLUX_AMR_DIR = os.path.abspath(os.path.join(SCRIPT_DIR, '../../pollux-AMR/hard
 if POLLUX_AMR_DIR not in sys.path:
     sys.path.insert(0, POLLUX_AMR_DIR)
 
-# --------------------
-# NEW LED pin assignments
-SANITIZE_LED_PIN  = 10   # UVC LED
-ROBOT_ON_LED_PIN  = 9    # ON/OFF LED
-INDICATOR_LED_PIN = 11   # Indicator LED
+# --- GPIO pins ---
+SANITIZE_LED_PIN  = 10
+ROBOT_ON_LED_PIN  = 9
+INDICATOR_LED_PIN = 11
 
-# LED command codes
-SANITIZE_OFF       = 0
-SANITIZE_ON        = 1
-ROBOT_ON_DIM       = 2
-ROBOT_ON_BRIGHT    = 3
-INDICATOR_ON       = 4
-INDICATOR_OFF      = 5
+# --- command codes ---
+SANITIZE_OFF    = 0
+SANITIZE_ON     = 1
+ROBOT_ON_DIM    = 2
+ROBOT_ON_BRIGHT = 3
+# 4 / 5 are no longer needed externally because indicator follows sanitize
 
 class LEDControllerNode:
     def __init__(self):
         rospy.init_node('led_control_node', anonymous=True)
-        rospy.loginfo("led_control_node started. Subscribing to /pollux/led_cmd.")
-
         GPIO.setmode(GPIO.BCM)
         GPIO.setwarnings(False)
 
-        # Initialize LED pins as output
-        GPIO.setup(SANITIZE_LED_PIN, GPIO.OUT)
-        GPIO.setup(ROBOT_ON_LED_PIN, GPIO.OUT)
-        GPIO.setup(INDICATOR_LED_PIN, GPIO.OUT)
+        for pin in (SANITIZE_LED_PIN, ROBOT_ON_LED_PIN, INDICATOR_LED_PIN):
+            GPIO.setup(pin, GPIO.OUT)
 
-        # Optionally use PWM for Robot-On LED
-        self.robot_on_led_pwm = GPIO.PWM(ROBOT_ON_LED_PIN, 1000)  # 1kHz frequency
-        self.robot_on_led_pwm.start(0)  # Start OFF
+        # PWM for ON‑LED
+        self.on_pwm = GPIO.PWM(ROBOT_ON_LED_PIN, 1000)
+        self.on_pwm.start(100)                       # full bright at power‑up
 
-        self.led_sub = rospy.Subscriber('/pollux/led_cmd', Int32, self.led_cmd_callback)
+        rospy.Subscriber('/pollux/led_cmd', Int32, self.cb)
+        rospy.loginfo("led_control_node ready (ON‑LED bright).")
 
-        rospy.loginfo("LED pins initialized. Ready to receive LED commands.")
-
-    def led_cmd_callback(self, msg):
+    # ---------- callback ----------
+    def cb(self, msg):
         cmd = msg.data
-        rospy.loginfo("led_control_node received cmd: %d", cmd)
-
-        if cmd == SANITIZE_OFF:
-            GPIO.output(SANITIZE_LED_PIN, GPIO.LOW)
-            rospy.loginfo("Sanitization LED turned OFF.")
-
-        elif cmd == SANITIZE_ON:
+        if   cmd == SANITIZE_ON:
             GPIO.output(SANITIZE_LED_PIN, GPIO.HIGH)
-            rospy.loginfo("Sanitization LED turned ON.")
-
-        elif cmd == ROBOT_ON_DIM:
-            self.robot_on_led_pwm.ChangeDutyCycle(30.0)
-            rospy.loginfo("Robot On LED: DIM.")
-
-        elif cmd == ROBOT_ON_BRIGHT:
-            self.robot_on_led_pwm.ChangeDutyCycle(100.0)
-            rospy.loginfo("Robot On LED: BRIGHT.")
-
-        elif cmd == INDICATOR_ON:
             GPIO.output(INDICATOR_LED_PIN, GPIO.HIGH)
-            rospy.loginfo("Indicator LED turned ON.")
-
-        elif cmd == INDICATOR_OFF:
+            rospy.loginfo("Sanitize+Indicator ON")
+        elif cmd == SANITIZE_OFF:
+            GPIO.output(SANITIZE_LED_PIN, GPIO.LOW)
             GPIO.output(INDICATOR_LED_PIN, GPIO.LOW)
-            rospy.loginfo("Indicator LED turned OFF.")
-
+            rospy.loginfo("Sanitize+Indicator OFF")
+        elif cmd == ROBOT_ON_DIM:
+            self.on_pwm.ChangeDutyCycle(30)
+            rospy.loginfo("ON‑LED dim")
+        elif cmd == ROBOT_ON_BRIGHT:
+            self.on_pwm.ChangeDutyCycle(100)
+            rospy.loginfo("ON‑LED bright")
         else:
-            rospy.logwarn("Unknown LED command: %d", cmd)
+            rospy.logwarn("Unknown LED cmd %d", cmd)
 
     def run(self):
         rospy.spin()
 
-    def cleanup(self):
-        rospy.loginfo("Cleaning up LED GPIO pins.")
-        self.robot_on_led_pwm.stop()
+    def __del__(self):
+        self.on_pwm.stop()
         GPIO.cleanup()
 
 if __name__ == '__main__':
-    try:
-        node = LEDControllerNode()
-        node.run()
-    except rospy.ROSInterruptException:
-        pass
-    finally:
-        node.cleanup()
+    LEDControllerNode().run()
