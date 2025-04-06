@@ -30,9 +30,6 @@ class LEDControllerNode:
 
         # Drive ON‑LED directly (no PWM) to stay bright
         GPIO.output(ROBOT_ON_LED_PIN, GPIO.HIGH)
-
-        # turn on on/off LED
-        GPIO.output(ROBOT_ON_LED_PIN, GPIO.HIGH)
         rospy.loginfo("Robot On LED: BRIGHT")
 
         rospy.Subscriber('/pollux/led_cmd', Int32, self.cb)
