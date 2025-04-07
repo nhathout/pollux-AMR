@@ -35,10 +35,9 @@ def main():
         
         distance_msg_2 = Float32MultiArray()
         distance_msg_2.data = [
-            float(distances_2.get('top_left',  -1.0)),
-            float(distances_2.get('top_right', -1.0)),
+            distances_2.get('top_left',  -1.0),
+            distances_2.get('top_right', -1.0),
         ]
-
         ultrasonic_2_pub.publish(distance_msg_2)
 
         tick += 1
