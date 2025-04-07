@@ -111,7 +111,7 @@ IMPORTANT Reminder: whenever SSHing into the Raspberry Pi, to utilize ROS and RO
 
    - To check sensor data:<br>
       ```rostopic echo /pollux/imu```<br>
-      ```rostopic echo /pollux/ultrasonic```
+      ```rostopic echo /pollux/ultrasonic_hw```
 
 3. For motors:<br>
    ```rosrun pollux_amr motor_cmd_node.py```
