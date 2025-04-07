@@ -21,7 +21,7 @@ SPIN_ADJUST_LEFT_CMD  = 8  # slight spin left (~20°)
 SPIN_ADJUST_RIGHT_CMD = 9  # slight spin right (~20°)
 
 # Parameters
-OBSTACLE_THRESHOLD = 15.0  # cm; if a sensor is under this distance => obstacle
+OBSTACLE_THRESHOLD = 18.0  # cm; if a sensor is under this distance => obstacle
 DEBOUNCE_DURATION  = 3.0   # ignore subsequent triggers for 3 s after one is handled
 ACTION_DURATION    = 2.0   # how long to back up or spin away
 
