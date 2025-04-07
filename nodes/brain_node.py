@@ -33,10 +33,10 @@ ADJUST_DURATION   = 1.5      # was fixed; we’ll randomize it for variety
 class BrainNode:
     def __init__(self):
         rospy.init_node('brain_node', anonymous=True)
-        rospy.loginfo("brain_node started. Subscribing to /pollux/ultrasonic")
+        rospy.loginfo("brain_node started. Subscribing to /pollux/ultrasonic_hw")
         
         # Subscribe to ultrasonic sensor data
-        self.ultra_sub = rospy.Subscriber('/pollux/ultrasonic', Float32MultiArray, self.ultrasonic_callback)
+        self.ultra_sub = rospy.Subscriber('/pollux/ultrasonic_hw', Float32MultiArray, self.ultrasonic_callback)
         # Publisher for motor commands
         self.cmd_pub = rospy.Publisher('/pollux/motor_cmd', Int32, queue_size=10)
         
@@ -98,7 +98,7 @@ class BrainNode:
 
         for spin_idx in range(random.randint(1, 2)):
             cmd  = random.choice([SPIN_ADJUST_LEFT_CMD, SPIN_ADJUST_RIGHT_CMD])
-            secs = random.uniform(1.0, 2.0)
+            secs = random.uniform(2.0, 4.0)
             rospy.loginfo("Brain => spin %s %.1fs", "L" if cmd==SPIN_ADJUST_LEFT_CMD else "R", secs)
             self.cmd_pub.publish(Int32(data=cmd))
             rospy.sleep(secs)

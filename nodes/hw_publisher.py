@@ -17,7 +17,7 @@ def main():
     GPIO.setwarnings(False)
 
     imu_pub        = rospy.Publisher('/pollux/imu',        Imu,               queue_size=10)
-    ultrasonic_pub = rospy.Publisher('/pollux/ultrasonic', Float32MultiArray, queue_size=10)
+    ultrasonic_pub = rospy.Publisher('/pollux/ultrasonic_hw', Float32MultiArray, queue_size=10)
 
     my_imu = imu.IMUController()
 
