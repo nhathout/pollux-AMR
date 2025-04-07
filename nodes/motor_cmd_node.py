@@ -22,32 +22,61 @@ def command_callback(msg):
     cmd = msg.data
     rospy.loginfo("motor_cmd_node got cmd %d", cmd)
 
-    if   cmd == 0:  motor_ctrl.move_forward(900, 4)
-    elif cmd == 1:  motor_ctrl.move_backward(900, 4)
-    elif cmd == 2:  motor_ctrl.motor_left.rotate(0,   4); motor_ctrl.motor_right.rotate(900, 4)
-    elif cmd == 3:  motor_ctrl.motor_left.rotate(900, 4); motor_ctrl.motor_right.rotate(0,   4)
-    elif cmd == 4:  motor_ctrl.motor_left.rotate(-900,4); motor_ctrl.motor_right.rotate(900, 4)
-    elif cmd == 5:  motor_ctrl.motor_left.rotate(900, 4); motor_ctrl.motor_right.rotate(-900,4)
-    elif cmd == 6:  pass   # stop handled inside library
-    elif cmd == 7:
-        t1 = threading.Thread(target=motor_ctrl.motor_left.rotate,  args=(3000,4))
-        t2 = threading.Thread(target=motor_ctrl.motor_right.rotate, args=(3000,4))
+    if   cmd == 0:  # Forward
+        # Lower speed from 900 to, say, 500 for a slower forward
+        motor_ctrl.move_forward(500, 4)
+
+    elif cmd == 1:  # Backward
+        # Also slower
+        motor_ctrl.move_backward(500, 4)
+
+    elif cmd == 2:  # turn left (not used in your code, presumably)
+        motor_ctrl.motor_left.rotate(0,   4)
+        motor_ctrl.motor_right.rotate(500, 4)
+
+    elif cmd == 3:  # turn right
+        motor_ctrl.motor_left.rotate(500, 4)
+        motor_ctrl.motor_right.rotate(0,   4)
+
+    elif cmd == 4:  # spin left
+        motor_ctrl.motor_left.rotate(-500,4)
+        motor_ctrl.motor_right.rotate( 500,4)
+
+    elif cmd == 5:  # spin right
+        motor_ctrl.motor_left.rotate( 500,4)
+        motor_ctrl.motor_right.rotate(-500,4)
+
+    elif cmd == 6:  # stop
+        # The library may already handle a "stop" method
+        motor_ctrl.stop()
+
+    elif cmd == 7:  # 180° rotate
+        # Increase the step count for a bigger turn if needed
+        t1 = threading.Thread(target=motor_ctrl.motor_left.rotate,  args=(2500,4))
+        t2 = threading.Thread(target=motor_ctrl.motor_right.rotate, args=(2500,4))
         t1.start(); t2.start(); t1.join(); t2.join()
-    elif cmd == 8:
-        t1 = threading.Thread(target=motor_ctrl.motor_left.rotate,  args=(-200,4))
-        t2 = threading.Thread(target=motor_ctrl.motor_right.rotate, args=( 200,4))
+
+    elif cmd == 8:  # slight spin left
+        # Increase from 200 to e.g. 1200 steps if you want a 2-second spin
+        # (depends on your motor, speed, gear ratio, etc.)
+        steps = 1200
+        t1 = threading.Thread(target=motor_ctrl.motor_left.rotate,  args=(-steps,4))
+        t2 = threading.Thread(target=motor_ctrl.motor_right.rotate, args=( steps,4))
         t1.start(); t2.start(); t1.join(); t2.join()
-    elif cmd == 9:
-        t1 = threading.Thread(target=motor_ctrl.motor_left.rotate,  args=( 200,4))
-        t2 = threading.Thread(target=motor_ctrl.motor_right.rotate, args=(-200,4))
+
+    elif cmd == 9:  # slight spin right
+        steps = 1200
+        t1 = threading.Thread(target=motor_ctrl.motor_left.rotate,  args=( steps,4))
+        t2 = threading.Thread(target=motor_ctrl.motor_right.rotate, args=(-steps,4))
         t1.start(); t2.start(); t1.join(); t2.join()
+
     else:
         rospy.logwarn("Unknown motor command %d", cmd)
 
 if __name__ == '__main__':
     rospy.init_node('motor_cmd_node')
 
-    motor_pins = {                     
+    motor_pins = {
         'left':  [6, 13, 19, 26],
         'right': [12, 16, 20, 21],
     }
