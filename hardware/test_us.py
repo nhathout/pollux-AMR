@@ -5,7 +5,7 @@ import ultrasonic
 
 GPIO.setmode(GPIO.BCM)
 GPIO.setwarnings(False)
-sensor = ultrasonic.UltrasonicSensor(trig_pin=14, echo_pin=15)  # Use one of your working configurations
+sensor = ultrasonic.UltrasonicSensor(trig_pin=23, echo_pin=18)  # Use one of your working configurations
 
 try:
     while True:
