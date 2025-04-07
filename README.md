@@ -6,7 +6,7 @@ Pollux-AMR uses sensor fusion (IMU, ultrasonic modules), motor control (stepper 
 
 ## Features
 - **Edge (Cliff) Detection**: Downward-facing HC-SR04 ultrasonic sensors to detect surface edges.  
-- **Obstacle Avoidance**: Optional additional ultrasonic sensors or cameras for collision prevention.  
+- **Obstacle Avoidance**: Additional ultrasonic sensors for collision prevention.  
 - **Reinforcement Learning**: Stable Baselines3 (PyTorch) for policy training.  
 - **ROS Integration**: ROS Noetic manages sensor data, control nodes, and RL modules.  
 - **OLED Display**: Provides real-time status or debug information.
@@ -23,15 +23,14 @@ Pollux-AMR uses sensor fusion (IMU, ultrasonic modules), motor control (stepper 
    - 2 motorized wheels, 1 castor wheel, and a sturdy platform.  
 2. **Adafruit MPU-6050 (6-DOF)**  
    - Accelerometer + gyroscope for orientation.  
-3. **4× HC-SR04 Ultrasonic Sensors**  
-   - Positioned downward for cliff detection.  
+3. **5× HC-SR04 Ultrasonic Sensors**  
+   - 3x Positioned downward for cliff detection.
+   - 2x Positioned forward for obstacle avoidance.
 4. **IPSG Step Motor Driver Boards**  
-   - Controls stepper motors (if used instead of DC motors).  
-5. **IPSG 1.3" OLED Display**  (unconfirmed)
-   - For real-time status or debug info.  
-6. **Raspberry Pi 4 Model B(4GB)**  
+   - Controls stepper motors (if used instead of DC motors).   
+5. **Raspberry Pi 4 Model B(4GB)**  
    - Core computing platform and ROS node host.  
-7. **Optional Cameras**  (very highly unlikely)
+6. **Optional Cameras**  (very highly unlikely)
    - Stereo or dual Pi Cameras for advanced obstacle detection or visual RL.
 
 ## Setup
