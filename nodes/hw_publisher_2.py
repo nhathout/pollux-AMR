@@ -31,12 +31,12 @@ def main():
     tick = 0
 
     while not rospy.is_shutdown():
-        distances_2 = my_extra_sensors.get_distances()  # returns dict keyed by 'obstacle_left' and 'obstacle_right'
+        distances_2 = my_extra_sensors.get_distances()  # returns dict keyed by 'top_left' and 'top_right'
         
         distance_msg_2 = Float32MultiArray()
         distance_msg_2.data = [
-            distances_2.get('obstacle_left',  -1.0),
-            distances_2.get('obstacle_right', -1.0),
+            distances_2.get('top_left',  -1.0),
+            distances_2.get('top_right', -1.0),
         ]
         ultrasonic_2_pub.publish(distance_msg_2)
 
