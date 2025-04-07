@@ -14,7 +14,7 @@ SANITIZE_ON     = 1
 ROBOT_ON_BRIGHT = 3
 
 # Thresholds and timing constants
-TILT_LIMIT_DEG      = 60.0      # Robot is considered safe if tilt is below 60°
+TILT_LIMIT_DEG      = 130.0      # Robot is considered safe if tilt is below 60°
 ANG_VEL_LIMIT       = 10.0      # Robot is considered safe if angular velocity magnitude is below 10.0 (e.g., rad/s)
 SAFE_DELAY_SECS     = 0       # Must be safe for 0.5 s before enabling the UV/indicator LED
 UNSAFE_DELAY_SECS   = 1       # Must be unsafe for 0.3 s before turning off the UV/indicator LED
