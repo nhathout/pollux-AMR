@@ -47,8 +47,7 @@ def command_callback(msg):
         motor_ctrl.motor_right.rotate(-500,4)
 
     elif cmd == 6:  # stop
-        # The library may already handle a "stop" method
-        motor_ctrl.stop()
+        pass
 
     elif cmd == 7:  # 180° rotate
         # Increase the step count for a bigger turn if needed
