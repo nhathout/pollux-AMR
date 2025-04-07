@@ -30,17 +30,16 @@ ROTATE_180_DURATION    = 3.0
 
 # === Front Obstacle Constants (front sensors) ===
 OBSTACLE_THRESHOLD     = 18.0   # cm; reading < 18 => obstacle
-OBSTACLE_DEBOUNCE_TIME = 5.0    # ignore new obstacle triggers for 3 s
+OBSTACLE_DEBOUNCE_TIME = 5.0    # ignore triggers for 5 s after one
 OBSTACLE_BACKWARD_SEC  = 0.5    # how long to back up
 OBSTACLE_TURN_SEC      = 3.0    # how long to turn away
+OBSTACLE_TURN_SEC_BOTH = 3.5    # how long to rotate 180 if both triggered
 
 class UnifiedBrainNode:
     """
     A single node that:
-      - Subscribes to bottom ultrasonic sensors (/pollux/ultrasonic_hw)
-        to detect cliffs and avoid them
-      - Subscribes to front ultrasonic sensors (/pollux/ultrasonic_2)
-        to detect obstacles in front
+      - Subscribes to bottom ultrasonic sensors (/pollux/ultrasonic_hw) -> detect cliffs
+      - Subscribes to front ultrasonic sensors (/pollux/ultrasonic_2) -> detect obstacles
       - Publishes motor commands on /pollux/motor_cmd
 
     This avoids conflicting commands from two separate "brain" nodes.
@@ -77,10 +76,11 @@ class UnifiedBrainNode:
 
     def forward_timer_cb(self, event):
         """
-        Called every 2 seconds to ensure the robot is moving forward
-        whenever we are not in the middle of an avoidance action.
+        Called every 2 seconds to ensure the robot moves forward
+        whenever we're not in the middle of an avoidance action.
         """
         if not self.in_action:
+            # Only command forward if truly idle
             rospy.loginfo("UnifiedBrain => Commanding forward motion.")
             self.cmd_pub.publish(FORWARD_CMD)
 
@@ -90,9 +90,8 @@ class UnifiedBrainNode:
     def bottom_sensors_callback(self, msg):
         """
         Called whenever the bottom ultrasonic sensors publish data
-        (e.g., [dist_left, dist_mid, dist_right]).
-        If we detect a “cliff” reading (distance > CLIFF_THRESHOLD),
-        perform the cliff-avoidance sequence.
+        (3-sensor array: [dist_left, dist_mid, dist_right]).
+        If a sensor reading > CLIFF_THRESHOLD => potential “cliff” => avoidance.
         """
         if self.in_action:
             return  # Already handling an event
@@ -124,21 +123,23 @@ class UnifiedBrainNode:
         self.in_action       = True
         self.last_cliff_time = current_time
 
+        # 1) Immediate STOP
         rospy.loginfo("UnifiedBrain => STOP (cliff detected)")
         self.cmd_pub.publish(STOP_CMD)
-        rospy.sleep(0.5)
+        rospy.sleep(0.3)  # slight pause
 
-        # Random back time to give variety
+        # 2) Random short backward
         back_time = random.uniform(BACKWARD_DURATION_MIN, BACKWARD_DURATION_MAX)
         rospy.loginfo("UnifiedBrain => BACKWARD for %.1f s", back_time)
         self.cmd_pub.publish(BACKWARD_CMD)
         rospy.sleep(back_time)
 
+        # 3) Full rotation
         rospy.loginfo("UnifiedBrain => ROTATE 180° for %.1f s", ROTATE_180_DURATION)
         self.cmd_pub.publish(ROTATE_180_CMD)
         rospy.sleep(ROTATE_180_DURATION)
 
-        # Optional random spin adjustments
+        # 4) (Optional) random spin adjustments for variety
         spin_count = random.randint(1, 2)
         for i in range(spin_count):
             cmd  = random.choice([SPIN_ADJUST_LEFT_CMD, SPIN_ADJUST_RIGHT_CMD])
@@ -157,15 +158,15 @@ class UnifiedBrainNode:
     def front_sensors_callback(self, msg):
         """
         Called whenever the front ultrasonic sensors publish data
-        (e.g., [dist_left, dist_right]).
-        If either sensor is < OBSTACLE_THRESHOLD => front obstacle detected.
+        (2-sensor array: [dist_left, dist_right]).
+        If either sensor < OBSTACLE_THRESHOLD => front obstacle => avoidance.
         """
         if self.in_action:
             return  # Already busy with an avoidance action
 
         current_time = rospy.get_time()
         if current_time - self.last_front_time < OBSTACLE_DEBOUNCE_TIME:
-            # Not enough time has passed since last front event
+            # Not enough time since last front event
             return
 
         distances_2 = list(msg.data)
@@ -178,39 +179,46 @@ class UnifiedBrainNode:
         if dist_left < 0 or dist_right < 0:
             rospy.logwarn("Front sensor invalid. (L=%.2f, R=%.2f)", dist_left, dist_right)
 
-        # Check if either is under obstacle threshold
-        obstacle_detected = False
-        if (0 < dist_left  < OBSTACLE_THRESHOLD) or (0 < dist_right < OBSTACLE_THRESHOLD):
-            obstacle_detected = True
+        # Check if either (or both) is under threshold
+        left_trigger  = (0 < dist_left  < OBSTACLE_THRESHOLD)
+        right_trigger = (0 < dist_right < OBSTACLE_THRESHOLD)
 
-        if not obstacle_detected:
-            return
+        if not (left_trigger or right_trigger):
+            return  # No front obstacle
 
-        # -------- Front Obstacle Avoidance Sequence --------
-        rospy.loginfo("Front obstacle detected. L=%.2f cm, R=%.2f cm",
-                      dist_left, dist_right)
+        rospy.loginfo("Front obstacle detected. L=%.2f cm, R=%.2f cm", dist_left, dist_right)
         self.in_action       = True
         self.last_front_time = current_time
 
-        # 1) STOP
+        # 1) Immediate STOP
         rospy.loginfo("UnifiedBrain => STOP for front obstacle")
         self.cmd_pub.publish(STOP_CMD)
-        rospy.sleep(0.5)
+        rospy.sleep(0.3)
 
-        # 2) Move backward
-        #rospy.loginfo("UnifiedBrain => BACKWARD for %.1f s", OBSTACLE_BACKWARD_SEC)
-        #self.cmd_pub.publish(BACKWARD_CMD)
-        #rospy.sleep(OBSTACLE_BACKWARD_SEC)
+        # 2) Backward a bit to give space to turn
+        rospy.loginfo("UnifiedBrain => BACKWARD for %.1f s", OBSTACLE_BACKWARD_SEC)
+        self.cmd_pub.publish(BACKWARD_CMD)
+        rospy.sleep(OBSTACLE_BACKWARD_SEC)
 
-        # 3) Turn away from the obstacle
-        if dist_left < dist_right:
-            rospy.loginfo("UnifiedBrain => Turn RIGHT for %.1f s", OBSTACLE_TURN_SEC)
-            self.cmd_pub.publish(SPIN_ADJUST_RIGHT_CMD)
+        # 3) Decide how to turn:
+        #    - If BOTH sensors see obstacle => do a full 180
+        #    - Else turn away from whichever is closer
+        if left_trigger and right_trigger:
+            # Both sensors triggered => rotate 180
+            rospy.loginfo("UnifiedBrain => BOTH front sensors triggered => rotating 180")
+            self.cmd_pub.publish(ROTATE_180_CMD)
+            rospy.sleep(OBSTACLE_TURN_SEC_BOTH)
+
         else:
-            rospy.loginfo("UnifiedBrain => Turn LEFT for %.1f s", OBSTACLE_TURN_SEC)
-            self.cmd_pub.publish(SPIN_ADJUST_LEFT_CMD)
+            # Only one side triggered => spin away from that side
+            if left_trigger:  # obstacle on left => turn right
+                rospy.loginfo("UnifiedBrain => Turn RIGHT for %.1f s", OBSTACLE_TURN_SEC)
+                self.cmd_pub.publish(SPIN_ADJUST_RIGHT_CMD)
+            else:             # obstacle on right => turn left
+                rospy.loginfo("UnifiedBrain => Turn LEFT for %.1f s", OBSTACLE_TURN_SEC)
+                self.cmd_pub.publish(SPIN_ADJUST_LEFT_CMD)
 
-        rospy.sleep(OBSTACLE_TURN_SEC)
+            rospy.sleep(OBSTACLE_TURN_SEC)
 
         # 4) Resume forward
         rospy.loginfo("UnifiedBrain => Forward.")
@@ -221,6 +229,7 @@ class UnifiedBrainNode:
     # --------------------------------------------------------------------------
     def run(self):
         rospy.spin()
+
 
 # ------------------------------------------------------------------------------
 if __name__ == '__main__':
