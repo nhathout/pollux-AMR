@@ -24,15 +24,15 @@ SPIN_ADJUST_RIGHT_CMD  = 9
 # === Cliff Detection Constants (bottom sensors) ===
 CLIFF_THRESHOLD        = 15.0   # cm; reading > 15 => potential cliff
 CLIFF_DEBOUNCE_TIME    = 10.0   # ignore new cliff triggers for 10 s
-BACKWARD_DURATION_MIN  = 1.0
-BACKWARD_DURATION_MAX  = 2.0
+BACKWARD_DURATION_MIN  = 0.5
+BACKWARD_DURATION_MAX  = 1.0
 ROTATE_180_DURATION    = 3.0
 
 # === Front Obstacle Constants (front sensors) ===
 OBSTACLE_THRESHOLD     = 18.0   # cm; reading < 18 => obstacle
-OBSTACLE_DEBOUNCE_TIME = 3.0    # ignore new obstacle triggers for 3 s
-OBSTACLE_BACKWARD_SEC  = 2.0    # how long to back up
-OBSTACLE_TURN_SEC      = 2.0    # how long to turn away
+OBSTACLE_DEBOUNCE_TIME = 5.0    # ignore new obstacle triggers for 3 s
+OBSTACLE_BACKWARD_SEC  = 0.5    # how long to back up
+OBSTACLE_TURN_SEC      = 3.0    # how long to turn away
 
 class UnifiedBrainNode:
     """
@@ -198,9 +198,9 @@ class UnifiedBrainNode:
         rospy.sleep(0.5)
 
         # 2) Move backward
-        rospy.loginfo("UnifiedBrain => BACKWARD for %.1f s", OBSTACLE_BACKWARD_SEC)
-        self.cmd_pub.publish(BACKWARD_CMD)
-        rospy.sleep(OBSTACLE_BACKWARD_SEC)
+        #rospy.loginfo("UnifiedBrain => BACKWARD for %.1f s", OBSTACLE_BACKWARD_SEC)
+        #self.cmd_pub.publish(BACKWARD_CMD)
+        #rospy.sleep(OBSTACLE_BACKWARD_SEC)
 
         # 3) Turn away from the obstacle
         if dist_left < dist_right:
