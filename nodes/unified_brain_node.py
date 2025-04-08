@@ -125,6 +125,7 @@ class UnifiedBrainNode:
         back_time = random.uniform(BACKWARD_DURATION_MIN, BACKWARD_DURATION_MAX)
         rospy.loginfo("UnifiedBrain => BACKWARD for %.1f s", back_time)
         self.cmd_pub.publish(BACKWARD_CMD)
+        self.cmd_pub.publish(BACKWARD_CMD)
         rospy.sleep(back_time)
 
         # 2) Full 180° rotation
