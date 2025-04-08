@@ -205,7 +205,7 @@ class UnifiedBrainNode:
                 rospy.loginfo(f"Front => single obstacle LEFT => spin RIGHT {SINGLE_SPIN_DURATION}s")
                 self.cmd_pub.publish(5)
                 rospy.sleep(SINGLE_SPIN_DURATION)
-            else:
+            if right_trigger:
                 rospy.loginfo(f"Front => single obstacle RIGHT => spin LEFT {SINGLE_SPIN_DURATION}s")
                 self.cmd_pub.publish(4)
                 rospy.sleep(SINGLE_SPIN_DURATION)
