@@ -70,7 +70,7 @@ class UnifiedBrainNode:
         self.in_action        = False  # "busy" flag to prevent overlaps
 
         # Timer to send FORWARD_CMD periodically when idle
-        self.forward_timer = rospy.Timer(rospy.Duration(3.0), self.forward_timer_cb)
+        self.forward_timer = rospy.Timer(rospy.Duration(4.0), self.forward_timer_cb)
 
     # --------------------------------------------------------------------------
     # Periodic forward "keep alive" (only if not in avoidance):
