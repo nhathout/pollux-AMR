@@ -122,8 +122,7 @@ class UnifiedBrainNode:
         self.cmd_pub.publish(STOP_CMD)
         rospy.sleep(0.5)
 
-        # 1) Random backward (1 to 2 seconds)
-        back_time = random.uniform(BACKWARD_DURATION_OBST, 2.0)
+        back_time = random.uniform(BACKWARD_DURATION_MIN, BACKWARD_DURATION_MAX)
         rospy.loginfo("UnifiedBrain => BACKWARD for %.1f s", back_time)
         self.cmd_pub.publish(BACKWARD_CMD)
         rospy.sleep(back_time)
@@ -191,7 +190,7 @@ class UnifiedBrainNode:
         # If BOTH sensors triggered => do the "full 180° + random spin" routine
         if left_trigger and right_trigger:
             # 1) Random short back
-            back_time = random.uniform(BACKWARD_DURATION_MIN, BACKWARD_DURATION_MAX)
+            back_time = random.uniform(BACKWARD_DURATION_OBST, 2.0)
             rospy.loginfo("UnifiedBrain => BACKWARD for %.1f s", back_time)
             self.cmd_pub.publish(BACKWARD_CMD)
             rospy.sleep(back_time)
