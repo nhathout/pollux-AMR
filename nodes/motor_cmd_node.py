@@ -65,7 +65,7 @@ def command_callback(msg):
     elif cmd == 6:  # stop
         # The motors library may have a .stop() method
         # that explicitly stops all motion. We'll call it if it exists:
-        motor_ctrl.stop()
+        pass
 
     elif cmd == 7:  # 180° rotate
         # We'll keep your original "smooth" 180 approach
