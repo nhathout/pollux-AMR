@@ -37,7 +37,7 @@ def command_callback(msg):
 
     elif cmd == 3:  # turn right
 
-        t1 = threading.Thread(target=motor_ctrl.motor_left.rotate,  args=(-1200,3))
+        t1 = threading.Thread(target=motor_ctrl.motor_left.rotate,  args=(1200,3))
         t2 = threading.Thread(target=motor_ctrl.motor_right.rotate, args=(0,3))
         t1.start(); t2.start(); t1.join(); t2.join()
 
