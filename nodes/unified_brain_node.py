@@ -24,8 +24,8 @@ SPIN_ADJUST_RIGHT_CMD  = 9
 # === Cliff (bottom) Detection Constants ===
 CLIFF_THRESHOLD        = 15.0   # cm => reading above means "cliff"
 CLIFF_DEBOUNCE_TIME    = 10.0   # ignore new cliff triggers for 10 s
-BACKWARD_DURATION_MIN  = 1.0    # random back time range
-BACKWARD_DURATION_MAX  = 2.0
+BACKWARD_DURATION_MIN  = 2.0    # random back time range
+BACKWARD_DURATION_MAX  = 4.0
 ROTATE_180_DURATION    = 4.0
 
 # === Front Obstacle Constants ===
@@ -70,7 +70,7 @@ class UnifiedBrainNode:
         self.in_action        = False  # "busy" flag to prevent overlaps
 
         # Timer to send FORWARD_CMD periodically when idle
-        self.forward_timer = rospy.Timer(rospy.Duration(3.0), self.forward_timer_cb)
+        self.forward_timer = rospy.Timer(rospy.Duration(2.0), self.forward_timer_cb)
 
     # --------------------------------------------------------------------------
     # Periodic forward "keep alive" (only if not in avoidance):
@@ -123,7 +123,7 @@ class UnifiedBrainNode:
         rospy.sleep(0.5)
 
         # 1) Random backward (1 to 2 seconds)
-        back_time = random.uniform(BACKWARD_DURATION_MIN, BACKWARD_DURATION_MAX)
+        back_time = random.uniform(BACKWARD_DURATION_OBST, 2.0)
         rospy.loginfo("UnifiedBrain => BACKWARD for %.1f s", back_time)
         self.cmd_pub.publish(BACKWARD_CMD)
         rospy.sleep(back_time)
@@ -137,7 +137,7 @@ class UnifiedBrainNode:
         spin_count = random.randint(1, 2)
         for i in range(spin_count):
             cmd  = random.choice([SPIN_ADJUST_LEFT_CMD, SPIN_ADJUST_RIGHT_CMD])
-            secs = random.uniform(2.0, 4.0)
+            secs = random.uniform(1.0, 3.0)
             rospy.loginfo("UnifiedBrain => spin %s for %.1f s",
                           "LEFT" if cmd == SPIN_ADJUST_LEFT_CMD else "RIGHT", secs)
             self.cmd_pub.publish(cmd)
