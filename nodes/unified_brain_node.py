@@ -25,7 +25,7 @@ SPIN_ADJUST_RIGHT_CMD  = 9
 CLIFF_THRESHOLD        = 15.0   # cm => reading above means "cliff"
 CLIFF_DEBOUNCE_TIME    = 10.0   # ignore new cliff triggers for 10 s
 BACKWARD_DURATION_MIN  = 3.0    # random back time range
-BACKWARD_DURATION_MAX  = 5.0
+BACKWARD_DURATION_MAX  = 4.0
 ROTATE_180_DURATION    = 4.0
 
 # === Front Obstacle Constants ===
