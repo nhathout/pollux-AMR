@@ -27,7 +27,7 @@ ROTATE_180_DURATION    = 4.0
 CLIFF_BACK_SECS_EACH   = 2.0    # each backward pass is 2 s, do 2 passes => ~4 s total
 
 # === Front Obstacle Constants ===
-OBSTACLE_THRESHOLD     = 18.0
+OBSTACLE_THRESHOLD     = 12.0
 OBSTACLE_DEBOUNCE_TIME = 3.0
 SINGLE_SPIN_DURATION   = 2.0    # spin away from obstacle side if only one sensor triggers
 
