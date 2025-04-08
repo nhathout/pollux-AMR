@@ -24,8 +24,8 @@ SPIN_ADJUST_RIGHT_CMD  = 9
 # === Cliff (bottom) Detection Constants ===
 CLIFF_THRESHOLD        = 15.0   # cm => reading above means "cliff"
 CLIFF_DEBOUNCE_TIME    = 10.0   # ignore new cliff triggers for 10 s
-BACKWARD_DURATION_MIN  = 5.0    # random back time range
-BACKWARD_DURATION_MAX  = 7.0
+BACKWARD_DURATION_MIN  = 4.5    # random back time range
+BACKWARD_DURATION_MAX  = 5.0
 ROTATE_180_DURATION    = 4.0
 
 # === Front Obstacle Constants ===
@@ -70,7 +70,7 @@ class UnifiedBrainNode:
         self.in_action        = False  # "busy" flag to prevent overlaps
 
         # Timer to send FORWARD_CMD periodically when idle
-        self.forward_timer = rospy.Timer(rospy.Duration(3.0), self.forward_timer_cb)
+        self.forward_timer = rospy.Timer(rospy.Duration(5.0), self.forward_timer_cb)
 
     # --------------------------------------------------------------------------
     # Periodic forward "keep alive" (only if not in avoidance):
