@@ -7,12 +7,13 @@ import random
 import rospy
 from std_msgs.msg import Float32MultiArray, Int32
 
+# If needed, adjust PYTHONPATH
 SCRIPT_DIR = os.path.dirname(__file__)
 POLLUX_AMR_DIR = os.path.abspath(os.path.join(SCRIPT_DIR, '../../pollux-AMR'))
 if POLLUX_AMR_DIR not in sys.path:
     sys.path.insert(0, POLLUX_AMR_DIR)
 
-# Motor command codes (must match motor_cmd_node.py)
+# Motor command codes
 FORWARD_CMD            = 0
 BACKWARD_CMD           = 1
 STOP_CMD               = 6
@@ -20,27 +21,19 @@ ROTATE_180_CMD         = 7
 SPIN_ADJUST_LEFT_CMD   = 8
 SPIN_ADJUST_RIGHT_CMD  = 9
 
-# Cliff (bottom) Detection Constants
-CLIFF_THRESHOLD        = 15.0  # cm => reading above => "cliff"
-CLIFF_DEBOUNCE_TIME    = 10.0  # ignore new cliff triggers for 10 s
+# Cliff Detection
+CLIFF_THRESHOLD        = 15.0
+CLIFF_DEBOUNCE_TIME    = 10.0
+CLIFF_BACK_SECS_EACH   = 2.0  # 2 x 2 = 4s total backward
 ROTATE_180_DURATION    = 4.0
 
-# Instead of random back time for a single backward, we’ll do 2 repeated BACKWARD commands
-CLIFF_BACK_SECS_EACH   = 2.0  # each backward command runs for 2 seconds, done twice => ~4s total
-
-# Front Obstacle Constants
-OBSTACLE_THRESHOLD     = 18.0
+# Front Obstacle
+OBSTACLE_THRESHOLD     = 20.0  # <== Bumped up to 25 so you see triggers earlier
 OBSTACLE_DEBOUNCE_TIME = 3.0
 SINGLE_SPIN_DURATION   = 2.0
-BACKWARD_DURATION_OBST = 1.0  # do multiple commands or a bigger backward if you want
+BACKWARD_DURATION_OBST = 1.0
 
 class UnifiedBrainNode:
-    """
-    Merged node:
-      • Bottom ultrasonic (cliffs) => highest priority
-      • Front ultrasonic (obstacles) => second priority
-      • Publishes motor commands to /pollux/motor_cmd
-    """
     def __init__(self):
         rospy.init_node('unified_brain_node', anonymous=True)
         rospy.loginfo("Unified Brain Node started.")
@@ -53,89 +46,95 @@ class UnifiedBrainNode:
                                           Float32MultiArray,
                                           self.front_sensors_callback)
 
-        # Motor publisher
+        # Motor Publisher
         self.cmd_pub = rospy.Publisher('/pollux/motor_cmd', Int32, queue_size=10)
 
-        # State
+        # Internal State
         self.last_cliff_time = 0.0
         self.last_front_time = 0.0
-        self.in_action       = False
+        self.in_action       = False   # "busy" avoiding something
+        self.last_cmd        = None    # track last motor cmd to avoid re-issues
 
-        # Timer for forward keep-alive (only if not in avoidance)
+        # Timer to occasionally re-send FORWARD (only if idle)
         self.forward_timer = rospy.Timer(rospy.Duration(5.0), self.forward_timer_cb)
 
     # --------------------------------------------------------------------------
-    def forward_timer_cb(self, event):
-        if not self.in_action:
-            rospy.loginfo("UnifiedBrain => Commanding forward motion.")
-            self.cmd_pub.publish(FORWARD_CMD)
+    # Helper: Publish a motor command, but only if different from last
+    # --------------------------------------------------------------------------
+    def send_cmd(self, cmd):
+        if cmd != self.last_cmd:
+            self.cmd_pub.publish(Int32(data=cmd))
+            self.last_cmd = cmd
 
     # --------------------------------------------------------------------------
-    # CLIFF DETECTION (highest priority)
+    # Called every 5s to keep the robot going forward if it's not in avoidance
+    # --------------------------------------------------------------------------
+    def forward_timer_cb(self, event):
+        if not self.in_action and self.last_cmd != FORWARD_CMD:
+            rospy.loginfo("UnifiedBrain => Keep-alive: forward.")
+            self.send_cmd(FORWARD_CMD)
+
+    # --------------------------------------------------------------------------
+    # CLIFF DETECTION
     # --------------------------------------------------------------------------
     def bottom_sensors_callback(self, msg):
         if self.in_action:
             return
 
         current_time = rospy.get_time()
-        # Debounce
         if (current_time - self.last_cliff_time) < CLIFF_DEBOUNCE_TIME:
             return
 
         distances = list(msg.data)
         if len(distances) != 3:
-            rospy.logwarn("UnifiedBrain => bottom_sensors: expected 3, got %d", len(distances))
+            rospy.logwarn("bottom_sensors: expected 3, got %d", len(distances))
             return
 
-        # If any sensor sees distance > CLIFF_THRESHOLD => cliff
-        cliff_detected = False
+        # Check if any sensor sees a "cliff" (> CLIFF_THRESHOLD)
+        cliff_found = False
         for idx, dist_val in enumerate(distances):
             if dist_val < 0:
                 continue
             if dist_val > CLIFF_THRESHOLD:
-                rospy.loginfo("Cliff detected on bottom sensor %d (%.1f cm)", idx, dist_val)
-                cliff_detected = True
+                rospy.loginfo("Cliff on bottom sensor %d (%.1f cm)", idx, dist_val)
+                cliff_found = True
                 break
 
-        if not cliff_detected:
+        if not cliff_found:
             return
 
-        # Start cliff avoidance
-        self.in_action = True
-        self.last_cliff_time = current_time
+        # Start Cliff Avoidance
+        self.in_action        = True
+        self.last_cliff_time  = current_time
 
-        rospy.loginfo("UnifiedBrain => STOP (cliff detected)")
-        self.cmd_pub.publish(STOP_CMD)
+        rospy.loginfo("Cliff Avoid => STOP")
+        self.send_cmd(STOP_CMD)
         rospy.sleep(0.5)
 
-        # Instead of random back time, do multiple BACKWARD commands => ~4s total
-        # This effectively "doubles" the backward distance.
+        # Double backward => ~4s
         for i in range(2):
-            rospy.loginfo(f"UnifiedBrain => BACKWARD pass {i+1} for {CLIFF_BACK_SECS_EACH:.1f} s")
-            self.cmd_pub.publish(BACKWARD_CMD)
+            rospy.loginfo(f"Cliff Avoid => BACKWARD pass {i+1} for {CLIFF_BACK_SECS_EACH} s")
+            self.send_cmd(BACKWARD_CMD)
             rospy.sleep(CLIFF_BACK_SECS_EACH)
 
         # 180° rotate
-        rospy.loginfo("UnifiedBrain => ROTATE 180° for %.1f s", ROTATE_180_DURATION)
-        self.cmd_pub.publish(ROTATE_180_CMD)
+        rospy.loginfo(f"Cliff Avoid => ROTATE 180° for {ROTATE_180_DURATION} s")
+        self.send_cmd(ROTATE_180_CMD)
         rospy.sleep(ROTATE_180_DURATION)
 
-        # (Optional) random spin once at most
-        # If you find repeated spins cause you to get "stuck," limit to spin_count=0 or 1
-        spin_count = random.randint(0, 1)  # 0 or 1
+        # Single optional spin
+        spin_count = random.randint(0, 1)
         for i in range(spin_count):
             cmd  = random.choice([SPIN_ADJUST_LEFT_CMD, SPIN_ADJUST_RIGHT_CMD])
             secs = random.uniform(1.0, 2.0)
-            rospy.loginfo("UnifiedBrain => spin %s for %.1f s",
-                          "LEFT" if cmd == SPIN_ADJUST_LEFT_CMD else "RIGHT", secs)
-            self.cmd_pub.publish(cmd)
+            rospy.loginfo(f"Cliff Avoid => spin {cmd} for {secs:.1f} s")
+            self.send_cmd(cmd)
             rospy.sleep(secs)
 
-        rospy.loginfo("UnifiedBrain => done w/ cliff avoidance, now resume forward + short cooldown")
-        self.cmd_pub.publish(FORWARD_CMD)
-
-        # Short cooldown so we don't re-trigger the same cliff reading immediately
+        rospy.loginfo("Cliff Avoid => done, forward + 1s cooldown.")
+        self.send_cmd(FORWARD_CMD)
         rospy.sleep(1.0)
+
         self.in_action = False
 
     # --------------------------------------------------------------------------
@@ -151,60 +150,56 @@ class UnifiedBrainNode:
 
         distances_2 = list(msg.data)
         if len(distances_2) < 2:
-            rospy.logwarn("UnifiedBrain => front_sensors: expected 2, got %d", len(distances_2))
+            rospy.logwarn("front_sensors: expected 2, got %d", len(distances_2))
             return
 
         dist_left, dist_right = distances_2
-        if dist_left < 0 or dist_right < 0:
-            rospy.logwarn("UnifiedBrain => front sensor invalid. (L=%.2f, R=%.2f)", dist_left, dist_right)
 
+        # e.g., [12.0, 30.5]
         left_trigger  = (0 < dist_left  < OBSTACLE_THRESHOLD)
         right_trigger = (0 < dist_right < OBSTACLE_THRESHOLD)
         if not (left_trigger or right_trigger):
-            return
+            return  # no obstacle
 
-        rospy.loginfo("Front obstacle. L=%.2f, R=%.2f", dist_left, dist_right)
+        # Mark in action
         self.in_action       = True
         self.last_front_time = current_time
 
-        rospy.loginfo("UnifiedBrain => STOP (front obstacle)")
-        self.cmd_pub.publish(STOP_CMD)
+        rospy.loginfo("Front Obstacle => STOP")
+        self.send_cmd(STOP_CMD)
         rospy.sleep(0.5)
 
+        # If BOTH triggered => do 180
         if left_trigger and right_trigger:
-            # BOTH => full 180 + spin
-            rospy.loginfo("UnifiedBrain => BACKWARD for %.1f s", BACKWARD_DURATION_OBST)
-            self.cmd_pub.publish(BACKWARD_CMD)
+            rospy.loginfo(f"Both front sensors => backward {BACKWARD_DURATION_OBST}s then 180°")
+            self.send_cmd(BACKWARD_CMD)
             rospy.sleep(BACKWARD_DURATION_OBST)
 
-            rospy.loginfo("UnifiedBrain => ROTATE 180° for %.1f s", ROTATE_180_DURATION)
-            self.cmd_pub.publish(ROTATE_180_CMD)
+            rospy.loginfo("Obstacle Avoid => rotate 180°")
+            self.send_cmd(ROTATE_180_CMD)
             rospy.sleep(ROTATE_180_DURATION)
 
-            # Optional small random spin or none
-            spin_count = random.randint(0, 1)
-            for i in range(spin_count):
-                cmd  = random.choice([SPIN_ADJUST_LEFT_CMD, SPIN_ADJUST_RIGHT_CMD])
-                secs = random.uniform(2.0, 3.0)
-                rospy.loginfo("UnifiedBrain => spin %s for %.1f s",
-                              "LEFT" if cmd == SPIN_ADJUST_LEFT_CMD else "RIGHT", secs)
-                self.cmd_pub.publish(cmd)
-                rospy.sleep(secs)
+            # If you want no extra spins here, skip them:
+            # spin_count = random.randint(0, 1)
+            # for i in range(spin_count):
+            #    ...
         else:
             # Single side => spin away
             if left_trigger:
-                rospy.loginfo("UnifiedBrain => SPIN RIGHT for %.1f s", SINGLE_SPIN_DURATION)
-                self.cmd_pub.publish(SPIN_ADJUST_RIGHT_CMD)
+                # obstacle on left => spin right
+                rospy.loginfo(f"Obstacle left => spin RIGHT for {SINGLE_SPIN_DURATION}s")
+                self.send_cmd(SPIN_ADJUST_RIGHT_CMD)
                 rospy.sleep(SINGLE_SPIN_DURATION)
             else:
-                rospy.loginfo("UnifiedBrain => SPIN LEFT for %.1f s", SINGLE_SPIN_DURATION)
-                self.cmd_pub.publish(SPIN_ADJUST_LEFT_CMD)
+                # obstacle on right => spin left
+                rospy.loginfo(f"Obstacle right => spin LEFT for {SINGLE_SPIN_DURATION}s")
+                self.send_cmd(SPIN_ADJUST_LEFT_CMD)
                 rospy.sleep(SINGLE_SPIN_DURATION)
 
-        rospy.loginfo("UnifiedBrain => Forward, then short cooldown so we don't re-trigger instantly.")
-        self.cmd_pub.publish(FORWARD_CMD)
+        rospy.loginfo("Obstacle Avoid => forward + 1s cooldown.")
+        self.send_cmd(FORWARD_CMD)
 
-        rospy.sleep(1.0)  # let the robot actually move forward a bit
+        rospy.sleep(1.0)
         self.in_action = False
 
     # --------------------------------------------------------------------------
