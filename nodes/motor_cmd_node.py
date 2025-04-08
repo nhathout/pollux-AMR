@@ -32,10 +32,10 @@ def command_callback(msg):
 
     elif cmd == 2:  # turn left (not used in your code, presumably)
         motor_ctrl.motor_left.rotate(0,   3)
-        motor_ctrl.motor_right.rotate(1200, 3)
+        motor_ctrl.motor_right.rotate(1400, 3)
 
     elif cmd == 3:  # turn right
-        motor_ctrl.motor_left.rotate(1200, 3)
+        motor_ctrl.motor_left.rotate(1400, 3)
         motor_ctrl.motor_right.rotate(0,   3)
 
     elif cmd == 4:  # spin left
