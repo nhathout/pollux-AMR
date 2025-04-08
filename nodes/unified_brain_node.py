@@ -62,7 +62,7 @@ class UnifiedBrainNode:
         self.in_action        = False  # busy flag
 
         # Timer: re-issue forward if idle
-        self.forward_timer = rospy.Timer(rospy.Duration(5.0), self.forward_timer_cb)
+        self.forward_timer = rospy.Timer(rospy.Duration(4.0), self.forward_timer_cb)
 
     # --------------------------------------------------------------------------
     # Keep-alive forward motion if not in avoidance
@@ -150,7 +150,7 @@ class UnifiedBrainNode:
             return
 
         current_time = rospy.get_time()
-        if (current_time - self.last_front_time) < 3.0:  # OBSTACLE_DEBOUNCE_TIME
+        if (current_time - self.last_front_time) < 6.0:  # OBSTACLE_DEBOUNCE_TIME
             return
 
         distances_2 = list(msg.data)
@@ -174,21 +174,21 @@ class UnifiedBrainNode:
 
         rospy.loginfo(f"Front obstacle => STOP. L={dist_left:.1f}, R={dist_right:.1f}")
         self.cmd_pub.publish(STOP_CMD)
-        rospy.sleep(0.5)  # .5–1s stop
+        rospy.sleep(1.0)  # .5–1s stop
 
         if left_trigger and right_trigger:
             # Both sensors => do the same logic as cliff:
             rospy.loginfo("Front => BOTH triggered => double BACKWARD + rotate 180 + optional spin")
 
             # Double backward => ~4 s
-            for i in range(2):
+            for i in range(1):
                 rospy.loginfo(f"Front => BACKWARD pass {i+1} for {CLIFF_BACK_SECS_EACH}s")
                 self.cmd_pub.publish(BACKWARD_CMD)
                 rospy.sleep(CLIFF_BACK_SECS_EACH)
 
             rospy.loginfo(f"Front => ROTATE 180° ({ROTATE_180_DURATION}s)")
             self.cmd_pub.publish(ROTATE_180_CMD)
-            rospy.sleep(ROTATE_180_DURATION)
+            #rospy.sleep(ROTATE_180_DURATION)
 
             # optional single random spin
             spin_count = random.randint(0, 1)
