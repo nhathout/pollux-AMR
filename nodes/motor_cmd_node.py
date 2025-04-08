@@ -39,12 +39,12 @@ def command_callback(msg):
         motor_ctrl.motor_right.rotate(0,   3)
 
     elif cmd == 4:  # spin left
-        motor_ctrl.motor_left.rotate(-500,3)
-        motor_ctrl.motor_right.rotate( 500,3)
+        motor_ctrl.motor_left.rotate(-1200,3)
+        motor_ctrl.motor_right.rotate( 1200,3)
 
     elif cmd == 5:  # spin right
-        motor_ctrl.motor_left.rotate( 500,3)
-        motor_ctrl.motor_right.rotate(-500,3)
+        motor_ctrl.motor_left.rotate( 1200,3)
+        motor_ctrl.motor_right.rotate(-1200,3)
 
     elif cmd == 6:  # stop
         pass
