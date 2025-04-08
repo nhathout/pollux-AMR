@@ -180,6 +180,16 @@ class UnifiedBrainNode:
             rospy.loginfo("UnifiedBrain => ROTATE 180° for %.1f s", ROTATE_180_DURATION)
             self.cmd_pub.publish(ROTATE_180_CMD)
             rospy.sleep(ROTATE_180_DURATION)
+
+            # Optional small random spin or none
+            spin_count = random.randint(0, 1)
+            for i in range(spin_count):
+                cmd  = random.choice([SPIN_ADJUST_LEFT_CMD, SPIN_ADJUST_RIGHT_CMD])
+                secs = random.uniform(2.0, 3.0)
+                rospy.loginfo("UnifiedBrain => spin %s for %.1f s",
+                              "LEFT" if cmd == SPIN_ADJUST_LEFT_CMD else "RIGHT", secs)
+                self.cmd_pub.publish(cmd)
+                rospy.sleep(secs)
         else:
             # Single side => spin away
             if left_trigger:
