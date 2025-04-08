@@ -202,12 +202,12 @@ class UnifiedBrainNode:
         else:
             # Only one side => slight spin away
             if left_trigger:
-                rospy.loginfo(f"Front => single obstacle LEFT => spin RIGHT {SINGLE_SPIN_DURATION}s")
-                self.cmd_pub.publish(5)
+                rospy.loginfo(f"Front => single obstacle LEFT => turn RIGHT {SINGLE_SPIN_DURATION}s")
+                self.cmd_pub.publish(3)
                 rospy.sleep(SINGLE_SPIN_DURATION)
             if right_trigger:
-                rospy.loginfo(f"Front => single obstacle RIGHT => spin LEFT {SINGLE_SPIN_DURATION}s")
-                self.cmd_pub.publish(4)
+                rospy.loginfo(f"Front => single obstacle RIGHT => turn LEFT {SINGLE_SPIN_DURATION}s")
+                self.cmd_pub.publish(2)
                 rospy.sleep(SINGLE_SPIN_DURATION)
 
         rospy.loginfo("Front => done, forward + short cooldown")
