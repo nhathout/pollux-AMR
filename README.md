@@ -75,7 +75,7 @@ Please feel free to open GitHub Issues, feature requests, and pull requests :)
 
 ## Appendix
 [![Press Here to watch the RL model work in simulation!](/images/model_demo.png)](https://drive.google.com/file/d/1HToGHO0mSNwZyYFLXsZBkUujIVhTotNM/view?usp=sharing)
-**Media 1:** The linked clip showcases our custom reinforcement learning model operating within a custom simulation environment rendered using matplotlib. In the video, the agent successfully avoids falling off cliffs and colliding with obstacles, all while effectively exploring and covering roughly 40-60% of the available surface area. The specifics of the model are explained in more detail in our "Supporting Documents" section above.<br>
+**Media 1:** The linked clip showcases our custom reinforcement learning model operating within a custom simulation environment rendered using matplotlib. In the video, the agent successfully avoids falling off cliffs and colliding with obstacles, all while effectively exploring and covering roughly 40-60% of the available surface area. The specifics of the model are explained in more detail in our "Supporting Documents" section above.<br><br>
 
 <img src="/images/trained.png" alt="trained" width="40%"><br>
 **Figure 1:** Successful model trained on the Raspberry Pi to prove ability to dynamically train on a Pi 4 Model B.
