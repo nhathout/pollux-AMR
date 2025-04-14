@@ -1,37 +1,43 @@
 # pollux-AMR
 ![Maintained Badge](https://img.shields.io/badge/status-stable-yellow)<br>
-An autonomous countertop-cleaning robot with integrated reinforcement learning to prevent falling off cliffs and hitting obstacles.
-
-Pollux-AMR uses sensor fusion (IMU, ultrasonic modules), motor control (stepper drivers), and an OLED display to perform navigation tasks on a Raspberry Pi 4 Model B. The goal is to detect countertop edges (“cliffs”), avoid collisions, and learn from its environment.
+An autonomous countertop‑cleaning robot designed to avoid falling off edges (“cliffs”) and colliding with obstacles. Pollux‑AMR uses multiple ultrasonic sensors, an IMU, and ROS Noetic to orchestrate all hardware and software interactions. The system can optionally incorporate reinforcement learning for more advanced navigation or policy‑based behaviors.
 
 ## Features
-- **Edge (Cliff) Detection**: Downward-facing HC-SR04 ultrasonic sensors to detect surface edges.  
-- **Obstacle Avoidance**: Additional ultrasonic sensors for collision prevention.  
-- **Reinforcement Learning**: Stable Baselines3 (PyTorch) for policy training.  
-- **ROS Integration**: ROS Noetic manages sensor data, control nodes, and RL modules.  
-- **OLED Display**: Provides real-time status or debug information.
+- **5× Ultrasonic Sensors**  
+  - **3× Downward‑facing** to detect countertop edges (cliffs).  
+  - **2× Forward‑facing** for obstacle avoidance.  
+- **IMU‑Based LED Control**  
+  - Uses gyro/accelerometer data to enable or disable a UV sanitizing LED strip when tilt or angular velocity is unsafe.  
+- **ROS Noetic Integration**  
+  - Sensor data is published via dedicated hardware publisher nodes.  
+  - Motor commands and LED operations are handled by specialized nodes.  
+- **Reinforcement Learning (Optional)**  
+  - Can integrate with Stable Baselines3 (PyTorch) if you choose to train/adjust navigation policies.  
+- **Headless Ubuntu 20.04 on Raspberry Pi 4**  
+  - All ROS nodes run on a Pi 4 Model B, flashed with Ubuntu 20.04 (headless).  
+  - SSH in to manage and monitor.  
 
 ## Stack Architecture
-1. **Python 3.10.7** – Main language for scripting and programming.  
-2. **Stable Baselines3 (SB3)** – Reinforcement learning library built on PyTorch.  
-3. **OpenAI Gymnasium (Gym)** – Standard interface for RL environments and simulations.  
-4. **ROS (Robot Operating System) Noetic** – Middleware for inter-node communication and data handling.  
-5. **Development Environment** – Was initially Windows 10/11 using WSL2 (Ubuntu 20.04), however now it is SSH from a Mac to the Pi for remote development with the Raspberry Pi flashed with Ubuntu 20.04 LTS (headless).
+1. **Python 3.10+** – Main language for scripting and control logic.  
+2. **Stable Baselines3 (SB3)** – Reinforcement learning library (optional).  
+3. **OpenAI Gymnasium (Gym)** – Standard RL environment interface (optional).  
+4. **ROS Noetic** – Message passing and node‑based architecture for sensor/control pipelines.  
+5. **Development Environment** – Typically remote (SSH) from a Mac/PC into the Pi (Ubuntu 20.04).
 
 ## Hardware Components
 1. **Robot Base**  
-   - 2 motorized wheels, 1 castor wheel, and a sturdy platform.  
-2. **Adafruit MPU-6050 (6-DOF)**  
-   - Accelerometer + gyroscope for orientation.  
-3. **5× HC-SR04 Ultrasonic Sensors**  
-   - 3x Positioned downward for cliff detection.
-   - 2x Positioned forward for obstacle avoidance.
-4. **IPSG Step Motor Driver Boards**  
-   - Controls stepper motors (if used instead of DC motors).   
-5. **Raspberry Pi 4 Model B(4GB)**  
-   - Core computing platform and ROS node host.  
-6. **Optional Cameras**  (very highly unlikely)
-   - Stereo or dual Pi Cameras for advanced obstacle detection or visual RL.
+   - 2 motorized wheels, 1 castor wheel, platform for mounting sensors.  
+2. **Adafruit MPU‑6050 (6‑DOF)**  
+   - Accelerometer + gyroscope for orientation, tilt, and motion data.  
+3. **5× HC‑SR04 Ultrasonic Sensors**  
+   - 3x downward for cliff detection (pins assigned in `hw_publisher.py`).  
+   - 2x forward for obstacle avoidance (pins assigned in `hw_publisher_2.py`).  
+4. **LED Sub‑System**  
+   - A UV LED strip for surface sanitation, plus indicator LEDs; controlled via `led_control_node.py` + `led_gyro_node.py`.  
+5. **Stepper Motors and Drivers**  
+   - Controlled by `motor_cmd_node.py` using a DualMotorController.  
+6. **Raspberry Pi 4 Model B (4GB)**  
+   - Core computing platform (ARM Cortex‑A72), 4× USB ports, WiFi, GPIO pins for sensors/motors, runs ROS nodes headlessly.
 
 ## Setup
 - **Clone the Repo**
