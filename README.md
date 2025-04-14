@@ -57,12 +57,28 @@ An autonomous countertopâ€‘cleaning robot designed to avoid falling off edges (â
     pip install -e gym_pollux
     ```
 
+## Supporting Documents
+(MAY REQUIRE BU ACCOUNT TO VIEW)
+- Link to **User's Manual:** (in progress)<br><br>
+
+- Link to **Final Test Plan & Report:** [click here](https://docs.google.com/document/d/1nLfvciRge8nUAEQmeBG3rHHYXOoPHTD_1vJB__G8N-4/edit?usp=sharing)
+- Link to **(winning) Shark Tank Video:** [click here](https://drive.google.com/file/d/1ElmvJo_tTRmPK1KgQrT9eFHeo6qOJTg3/view?usp=sharing)
+- Link to **Critical Design Review (CDR) Presentation:** [click here](https://docs.google.com/presentation/d/1PCzo8z48-ifrknA4HLdUseuIMsqwAZrbvwXN47jLewY/edit?usp=sharing)
+- Link to **Shark Tank Presentation:** [click here](https://docs.google.com/presentation/d/1J7x6Hkm6MfULzXxtW8gPblj4HMrZ-OuL5eKAxO-fepI/edit?usp=sharing)<br><br>
+  
+- Link to **2nd Prototype Test Report:** [click here](https://docs.google.com/document/d/1qSaTDLb16L1KKv8wPwOk-qygIFx6U2V5G-Wa-tfIYAA/edit?usp=sharing)
+- Link to **Prototype Test Report:** [click here](https://docs.google.com/document/d/1bSMtuGWDiYZbLjaCkalLF-rUq3OvFMxzeYqiuovF3EY/edit?usp=sharing)
+- Link to **Preliminary Design Review (PDR) Presentation:** [click here](https://docs.google.com/presentation/d/1AgygkBsC4uNbJwVAmwFr3u0lZS7qua3f1DQ_0c6GlmY/edit?usp=sharing)
+
 ## Contributing
 Please feel free to open GitHub Issues, feature requests, and pull requests :)
 
 ## Appendix
-![trained](/images/trained.png)
-Figure 1: Successful model trained on the Raspberry Pi to prove ability to dynamically train on a Pi 4 Model B.
+[![Press Here to watch the RL model work in simulation!](/images/model_demo.png)](https://drive.google.com/file/d/1HToGHO0mSNwZyYFLXsZBkUujIVhTotNM/view?usp=sharing)
+**Media 1:** The linked clip showcases our custom reinforcement learning model operating within a custom simulation environment rendered using matplotlib. In the video, the agent successfully avoids falling off cliffs and colliding with obstacles, all while effectively exploring and covering roughly 40-60% of the available surface area. The specifics of the model are explained in more detail in our "Supporting Documents" section above.<br>
+
+<img src="/images/trained.png" alt="trained" width="40%"><br>
+**Figure 1:** Successful model trained on the Raspberry Pi to prove ability to dynamically train on a Pi 4 Model B.
 
 ## License 
 This Project is licensed under the MIT License. You are free to modify and distribute this code under those terms.
