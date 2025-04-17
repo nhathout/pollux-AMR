@@ -1,4 +1,12 @@
 #!/usr/bin/env python3
+
+"""
+motor_cmd_node.py listens to /pollux/motor_cmd for motion commands and translates them into
+motor control actions using the DualMotorController module. Executes forward, backward,
+turning, spinning, and stopping commands based on numeric codes. Depends on the motors.py
+hardware interface and is triggered by brain_node.py
+"""
+
 import os, sys, threading, rospy
 from std_msgs.msg import Int32
 

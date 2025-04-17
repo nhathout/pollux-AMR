@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
 
+"""
+brain_node.py monitors ultrasonic cliff sensors and issues motor commands to avoid falls.
+It commands forward motion during idle states and triggers a backward->rotate->redirect sequence
+when a potential cliff is detected. Actions depend on /pollux/motor_cmd and /pollux/ultrasonic_hw topics
+"""
+
 import os
 import sys
 import time
