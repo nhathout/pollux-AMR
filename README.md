@@ -57,9 +57,13 @@ An autonomous countertopâ€‘cleaning robot designed to avoid falling off edges (â
     pip install -e gym_pollux
     ```
 
-## Supporting Documents
+## Supporting Documents & Media
 (MAY REQUIRE BU ACCOUNT TO VIEW)
 - Link to **User's Manual:** (in progress)<br><br>
+
+- Links to video demonstrations of Pollux's major functionalities (UV indicator LED, cliff detection, and obstacle avoidance):
+    - **UV indication & cliff detection:** [click here](https://drive.google.com/file/d/1kTDrHVp9VE7UjMdm_vTjpf8ZEP2LUoZp/view?usp=sharing)
+    - **Obstacle Avoidance:** [click here](https://drive.google.com/file/d/1ax3cWRlPb4nttXV8eBDei8ND6SfjERsN/view?usp=sharing)
 
 - Link to **Final Test Plan & Report:** [click here](https://docs.google.com/document/d/1nLfvciRge8nUAEQmeBG3rHHYXOoPHTD_1vJB__G8N-4/edit?usp=sharing)
 - Link to **(winning) Shark Tank Video:** [click here](https://drive.google.com/file/d/1ElmvJo_tTRmPK1KgQrT9eFHeo6qOJTg3/view?usp=sharing)
