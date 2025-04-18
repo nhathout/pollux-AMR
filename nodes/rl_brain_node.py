@@ -206,7 +206,7 @@ def parse_args():
     p = argparse.ArgumentParser(description="RL brain node for Pollux‑AMR")
     p.add_argument("--mode", choices=["train", "infer", "resume"], default="infer",
                    help="Run training, resume training, or inference only")
-    p.add_argument("--model", type=str, default="../models/best_model_best.zip",
+    p.add_argument("--model", type=str, default="../models/pollux_rl_model.zip",
                    help="Path to save/load the PPO model")
     p.add_argument("--timesteps", type=int, default=200_000,
                    help="Total timesteps to train (only for train/resume)")
