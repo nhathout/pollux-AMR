@@ -54,7 +54,7 @@ FRONT_TOPIC  = "/pollux/ultrasonic_2"       # [left, right]
 IMU_TOPIC    = "/pollux/imu"                # custom IMU publisher
 CMD_TOPIC    = "/pollux/motor_cmd"
 
-CLIFF_THRESHOLD     = 15.0   # cm – reading **above** ⇒ cliff
+CLIFF_THRESHOLD     = 8.5   # cm – reading **above** ⇒ cliff
 OBSTACLE_THRESHOLD  = 12.0   # cm – reading **below** ⇒ obstacle
 MAX_SENSOR_CM       = 100.0  # normalisation upper‑bound
 
