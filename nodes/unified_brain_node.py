@@ -21,7 +21,7 @@ SPIN_ADJUST_LEFT_CMD   = 8
 SPIN_ADJUST_RIGHT_CMD  = 9
 
 # === Cliff (bottom) Detection Constants ===
-CLIFF_THRESHOLD        = 8.5   # cm => reading above => "cliff"
+CLIFF_THRESHOLD        = 13   # cm => reading above => "cliff"
 CLIFF_DEBOUNCE_TIME    = 10.0   # ignore new cliff triggers for 10 s
 ROTATE_180_DURATION    = 4.0
 CLIFF_BACK_SECS_EACH   = 2.0    # each backward pass is 2 s, do 2 passes => ~4 s total
