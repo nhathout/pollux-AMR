@@ -59,7 +59,11 @@ An autonomous countertopâ€‘cleaning robot designed to avoid falling off edges (â
 
 ## Supporting Documents & Media
 (MAY REQUIRE BU ACCOUNT TO VIEW)
-- Link to **User's Manual:** (in progress)<br><br>
+- Link to **User's Manual:** [click here](https://docs.google.com/document/d/1WDNQtBAzQioiVHYzoj2xVuRMR3jV1yGgZe9JvNC5dmk/edit?usp=sharing)<br><br>
+
+- Links to video demonstrations of Pollux's major functionalities (UV indicator LED, cliff detection, and obstacle avoidance):
+    - **UV indication & cliff detection:** [click here](https://drive.google.com/file/d/1kTDrHVp9VE7UjMdm_vTjpf8ZEP2LUoZp/view?usp=sharing)
+    - **Obstacle Avoidance:** [click here](https://drive.google.com/file/d/1ax3cWRlPb4nttXV8eBDei8ND6SfjERsN/view?usp=sharing)<br><br>
 
 - Links to video demonstrations of Pollux's major functionalities (UV indicator LED, cliff detection, and obstacle avoidance):
     - **UV indication & cliff detection:** [click here](https://drive.google.com/file/d/1kTDrHVp9VE7UjMdm_vTjpf8ZEP2LUoZp/view?usp=sharing)
