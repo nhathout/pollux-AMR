@@ -48,14 +48,18 @@ OBSTACLE_THRESHOLD = 12.0  # cm
 MAX_SENSOR_CM      = 100.0
 
 ACC_LIMIT    = 3.0   # m/s²
-BACK_PENALTY = 0.03
-FALL_PENALTY = 20.0
 
-FWD_REWARD       = 0.05
 MOVE_REWARD      = 0.05
 STUCK_PENALTY    = 0.05
 MOVE_THRESH_REW  = 1.5
 MOVE_THRESH_PUN  = 0.005
+
+# --- reward constants -----------
+CLIFF_PENALTY  = 20.0    
+BACK_PENALTY   = 0.15    
+FALL_PENALTY   = 40.0    
+FWD_REWARD     = 0.08    
+BASE_REWARD    = 0.05    
 
 CTRL_HZ     = 2
 EP_MAX_SECS = 90
@@ -144,7 +148,8 @@ class PolluxRealEnv(gym.Env):
         ax_n, ay_n = obs[5:]
 
         if any(v > CLIFF_THRESHOLD for v in b_vals):
-            penalty += 10.0; self._last_penalty = True
+            penalty += CLIFF_PENALTY
+            self._last_penalty = True
         elif any(0 < v < OBSTACLE_THRESHOLD for v in f_vals):
             penalty += 5.0; self._last_penalty = True
         else:
@@ -170,7 +175,7 @@ class PolluxRealEnv(gym.Env):
         if ACTION_MAP[action] in {FORWARD_CMD, SPIN_LEFT_CMD, SPIN_RIGHT_CMD}:
             bonus += FWD_REWARD
 
-        return base + bonus - penalty
+        return BASE_REWARD + bonus - penalty
 
     def _check_done(self, obs):
         if any(v * MAX_SENSOR_CM > CLIFF_THRESHOLD for v in obs[:3]):
@@ -249,11 +254,11 @@ def main():
     next_ckpt = args.save_every
 
     def save_callback(_locals, _globals):
-        """Periodic checkpoint every --save-every steps."""
         nonlocal next_ckpt
         steps = _locals["self"].num_timesteps
         if steps >= next_ckpt:
-            ckpt_file = model_path.parent / f"pollux_rl_{steps//1000}k.zip"
+            # build filename by hand – works on Py‑3.8
+            ckpt_file = model_path.parent / f"{model_path.stem}_{steps//1000}k.zip"
             rospy.loginfo(f"Checkpoint @ {steps:,} → {ckpt_file}")
             _locals["self"].save(ckpt_file)
             next_ckpt += args.save_every
@@ -265,5 +270,6 @@ def main():
     except KeyboardInterrupt:
         rospy.logwarn("Training interrupted by user – saving model before exit.")
     finally:
-        rospy.loginfo(f"Final save → {model_path}")
-        model.save(model_path)
+        final_file = model_path.with_suffix(".zip")
+        rospy.loginfo(f"Final save → {final_file}")
+        model.save(final_file)
