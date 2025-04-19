@@ -1,4 +1,14 @@
 #!/usr/bin/env python3
+
+"""
+This ROS node, `led_gyro_node`, subscribes to IMU data from the `/pollux/imu` topic and
+uses tilt angle and angular velocity to assess whether the robot is in a safe operating state.
+Based on this assessment and using timers, it controls the UV sanitize and indicator
+LEDs by publishing commands to the `/pollux/led_cmd` topic. It depends on the `led_control_node`,
+which handles the actual GPIO pin toggling based on these published commands. The node helps
+ensure UV LEDs are only active when the robot is upright and stable, improving safety and reliability.
+"""
+
 import os, sys, math, rospy
 from sensor_msgs.msg import Imu
 from std_msgs.msg import Int32
