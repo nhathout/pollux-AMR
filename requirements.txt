@@ -1,6 +1,7 @@
 numpy>=1.21.2
 gymnasium>=0.29.1
-stable-baselines3==2.2.1
+pip install 'stable-baselines3[extra]==1.8.2'
 matplotlib==3.7.1
 pygame-ce==2.3.1  # Use community edition
-torch==2.1.0 --extra-index-url https://download.pytorch.org/whl/cpu
+torch==1.13.1
+gym
