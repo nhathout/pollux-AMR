@@ -5,9 +5,6 @@ rl_brain_node.py – v3.3  (path fix · escape bonus · optional fall penalty)
 * Default model path points to the repo folder:
     ~/catkin_ws/src/pollux-AMR/models/pollux_rl_model.zip
 * `--disable-fall-penalty` lets you train safely on a guarded table.
-* Extra +0.04 bonus for “back‑then‑turn/forward” escape manoeuvre.
-* Checkpoints and final save use the same manual filename rule
-  (works on Python 3.8, no Path.with_stem()).
 
 Usage
 -----
