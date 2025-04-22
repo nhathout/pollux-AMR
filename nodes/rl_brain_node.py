@@ -248,7 +248,7 @@ def main():
             pass
         return
 
-    # ======================================================
+        # ======================================================
     # TRAIN / RESUME MODE
     # ======================================================
     next_ckpt = args.save_every
@@ -256,15 +256,13 @@ def main():
     def save_callback(_locals, _globals):
         """
         Periodic checkpoint every --save-every steps.
-        (No Path.with_stem() so it works on Python 3.8.)
+        (No Path.with_stem(); works on Python 3.8.)
         """
         nonlocal next_ckpt
         steps = _locals["self"].num_timesteps
         if steps >= next_ckpt:
-            ckpt_file = (
-                model_path.parent /
-                f"{model_path.stem}_{steps // 1000}k.zip"
-            )
+            # Build a name like pollux_rl_10k.zip
+            ckpt_file = model_path.parent / f"{model_path.stem}_{steps // 1000}k.zip"
             rospy.loginfo(f"Checkpoint @ {steps:,} → {ckpt_file}")
             _locals["self"].save(ckpt_file)
             next_ckpt += args.save_every
@@ -276,7 +274,7 @@ def main():
     except KeyboardInterrupt:
         rospy.logwarn("Training interrupted by user – saving model before exit.")
     finally:
-        # Always write a final model, even if learn() raised
+        # Always write a final model, even if an exception occurred
         final_file = model_path.expanduser()
         rospy.loginfo(f"Final save → {final_file}")
         model.save(final_file)
