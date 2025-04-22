@@ -38,13 +38,13 @@ ACC_LIMIT          = 3.0   # m/s² horizontal
 CLIFF_PENALTY   = 20.0
 BACK_PENALTY    = 0.15
 FALL_PENALTY    = 40.0
-FWD_REWARD      = 0.08
+FWD_REWARD      = 0.2
 BASE_REWARD     = 0.05
 MOVE_REWARD     = 0.05
-STUCK_PENALTY   = 0.05
+STUCK_PENALTY   = 0.5
 MOVE_THRESH_REW = 1.5
 MOVE_THRESH_PUN = 0.005
-ESCAPE_BONUS    = 0.04
+ESCAPE_BONUS    = 0.5
 
 CTRL_HZ     = 2
 EP_MAX_SECS = 90
@@ -235,10 +235,11 @@ def main():
     next_ckpt = args.save_every
 
     def save_callback(_locals, _globals):
+        """Save checkpoints as pollux_rl_XXk.zip (no model_path.stem)."""
         nonlocal next_ckpt
         steps = _locals["self"].num_timesteps
         if steps >= next_ckpt:
-            ckpt_file = model_path.parent / f"{model_path.stem}_{steps//1000}k.zip"
+            ckpt_file = model_path.parent / f"pollux_rl_{steps // 1000}k.zip"
             rospy.loginfo(f"Checkpoint @ {steps:,} → {ckpt_file}")
             _locals["self"].save(ckpt_file)
             next_ckpt += args.save_every
