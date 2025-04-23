@@ -9,17 +9,13 @@ rl_brain_node.py – v3.3  (path fix · escape bonus · optional fall penalty)
 Usage
 -----
 Train from scratch, checkpoint every 25 k:
-    rosrun pollux_amr rl_brain_node.py --mode train \
-        --timesteps 200000 --save-every 25000
+    rosrun pollux_amr rl_brain_node.py --mode train --timesteps 200000 --save-every 25000
 
 Resume training from saved model:
-    rosrun pollux_amr rl_brain_node.py --mode resume \
-        --model ~/catkin_ws/src/pollux-AMR/models/pollux_rl_model.zip \
-        --timesteps 500000
+    rosrun pollux_amr rl_brain_node.py --mode resume --model ~/catkin_ws/src/pollux-AMR/models/pollux_rl_model.zip --timesteps 10000 --save-every 1000
 
 Run inference only:
-    rosrun pollux_amr rl_brain_node.py --mode infer \
-        --model ~/catkin_ws/src/pollux-AMR/models/pollux_rl_model.zip
+    rosrun pollux_amr rl_brain_node.py --mode infer --model ~/catkin_ws/src/pollux-AMR/models/pollux_rl_model.zip
 """
 import argparse, time
 from pathlib import Path
