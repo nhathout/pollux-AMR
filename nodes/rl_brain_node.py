@@ -199,7 +199,7 @@ class PolluxRealEnv(gym.Env):
 # =====================================================================
 def parse_args():
     p = argparse.ArgumentParser(description="Pollux RL brain node")
-    default = "~/catkin_ws/src/pollux-AMR/models/pollux_rl_model_v2.zip"
+    default = "~/catkin_ws/src/pollux-AMR/models/pollux_rl_model.zip"
     p.add_argument("--mode", choices=["train","infer","resume"], default="infer")
     p.add_argument("--model", type=str, default=default)
     p.add_argument("--timesteps", type=int, default=50000)
