@@ -8,9 +8,7 @@ Train from scratch, checkpoint every 25 k:
     rosrun pollux_amr rl_brain_node.py --mode train --timesteps 200000 --save-every 25000
 
 Resume training:
-    rosrun pollux_amr rl_brain_node.py --mode resume \
-        --model ~/catkin_ws/src/pollux-AMR/models/pollux_rl_model.zip \
-        --timesteps 15000 --save-every 1000
+    rosrun pollux_amr rl_brain_node.py --mode resume --model ~/catkin_ws/src/pollux-AMR/models/pollux_rl_model.zip --timesteps 3000 
 
 Run inference only:
     rosrun pollux_amr rl_brain_node.py --mode infer --model ~/catkin_ws/src/pollux-AMR/models/pollux_rl_model.zip
@@ -41,7 +39,7 @@ CLIFF_PENALTY   = 30.0          # ↑ cliff is worst
 BACK_PENALTY    = 0.25          # ↑ discourage blind reversing
 FALL_PENALTY    = 40.0
 FWD_REWARD      = 0.08
-SPIN_ESCAPE_BONUS = 0.06        # spin after a hazard backup
+SPIN_ESCAPE_BONUS = 5.00        # spin after a hazard backup
 BASE_REWARD     = 0.05
 MOVE_REWARD     = 0.05
 STUCK_PENALTY   = 0.05
