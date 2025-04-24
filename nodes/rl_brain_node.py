@@ -39,13 +39,13 @@ IMU_TOPIC    = "/pollux/imu"
 CMD_TOPIC    = "/pollux/motor_cmd"
 
 # ───── thresholds ─────
-CLIFF_THRESHOLD    = 8.5      # cm
+CLIFF_THRESHOLD    = 10.0      # cm
 OBSTACLE_THRESHOLD = 12.0     # cm
 MAX_SENSOR_CM      = 100.0
 ACC_LIMIT          = 3.0      # m s⁻² horizontal
 
 # ───── reward constants ─────
-CLIFF_PENALTY      = 30.0
+CLIFF_PENALTY      = 50.0
 BACK_PENALTY       = 0.35
 FALL_PENALTY       = 40.0
 FWD_REWARD         = 0.08
