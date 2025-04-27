@@ -82,13 +82,6 @@ Flash *ubuntu-20.04.6-preinstalled-server-arm64+raspi.img.xz*, enable SSH, set h
 
 ---
 
-## 6 · Testing & CI  
-* Unit tests → pytest tests/  
-* Lint → ruff .  
-* HIL action powers a lab Pi via smart-plug, runs end-to-end, uploads bag files.
-
----
-
 ## 7 · Future Improvements  
 * ONNX Runtime for faster inference  
 * pigpio waveforms for non-blocking ultrasonic timing  
