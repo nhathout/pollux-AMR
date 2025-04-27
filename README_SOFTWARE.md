@@ -82,7 +82,7 @@ Flash *ubuntu-20.04.6-preinstalled-server-arm64+raspi.img.xz*, enable SSH, set h
 
 ---
 
-## 7 · Future Improvements  
+## 6 · Future Improvements  
 * ONNX Runtime for faster inference  
 * pigpio waveforms for non-blocking ultrasonic timing  
 * ROS dynamic-reconfigure for live tuning  
