@@ -53,16 +53,16 @@
 Flash *ubuntu-20.04.6-preinstalled-server-arm64+raspi.img.xz*, enable SSH, set hostname *pollux*.
 
 ### 4.2 · Base Packages
-    ```bash
-        sudo apt update && sudo apt upgrade -y
-        sudo apt install -y ros-noetic-ros-base python3-rosdep \
-            python3-rosinstall python3-rosinstall-generator \
-            python3-wstool build-essential
-        sudo rosdep init && rosdep update
+    ```
+    sudo apt update && sudo apt upgrade -y
+    sudo apt install -y ros-noetic-ros-base python3-rosdep \
+        python3-rosinstall python3-rosinstall-generator \
+        python3-wstool build-essential
+    sudo rosdep init && rosdep update
     ```
 
 ### 4.3 · Project Stack  
-    ```bash
+    ```
     git clone https://github.com/<your-org>/pollux-AMR.git
     cd pollux-AMR
     chmod +x setup_env.sh && ./setup_env.sh
