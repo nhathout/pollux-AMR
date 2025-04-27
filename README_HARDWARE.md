@@ -62,15 +62,29 @@ Pollux-AMR is an autonomous countertop-cleaning robot. Its hardware components a
 - **Schematics:** [Provided separately in PDF/ and EDA files]
 - **PCB Documentation:** [Provided separately in PCB/ folder]
 
-## Vendor Information & Bill of Materials (BOM)
-| Item | Vendor | Model Number |
-|:----|:------|:------------|
-| Ultrasonic Sensors | Generic | HC-SR04 |
-| IMU Sensor | Adafruit | MPU-6050 |
-| Stepper Motors | Generic | N/A |
-| Motor Driver | Generic | Dual Motor Controller |
-| Raspberry Pi | Raspberry Pi Foundation | Pi 4 Model B (4GB) |
-| UV LED Strip | Adafruit | UV 395nm LED Strip |
+## Vendor Information & Bill of Materials (BOM) with Cost Breakdown
+
+| Item # | Description              | Vendor                  | Quantity | Unit Cost | Extended Cost |
+|:------:|:-------------------------|:------------------------|:--------:|:---------:|:-------------:|
+|   1    | Ultrasonic Sensors        | Generic                 | 5        | $2        | $10           |
+|   2    | IMU Sensor                | Adafruit                | 1        | $15       | $15           |
+|   3    | Stepper Motors            | Generic                 | 2        | $3        | $6            |
+|   4    | Raspberry Pi 4 Model B    | Raspberry Pi Foundation | 1        | $45       | $45           |
+|   5    | 8mW UV-C Light            | Amazon                  | 5        | $12       | $60           |
+|   6    | Lithium Battery           | Energizer               | 1        | $40       | $40           |
+|   7    | Wheels                    | Amazon                  | 2        | $1        | $2            |
+|   8    | Caster Wheel              | Amazon                  | 1        | $2        | $2            |
+|   9    | Magnets                   | Amazon                  | 18       | $0.20     | $3.60         |
+|   10   | Filament for Housing      | Amazon                  | 1        | $15       | $15           |
+
+**Beta Version Total Cost:** **$198.60**
+
+
+## Clear picture of system inside the enclosure
+
+![Inside Enclosure](images/inside_enclosure.png)
+
+![Enclosure with lid on](images/enclosure_lid_on.png)
 
 ## Reference Materials
 - [HC-SR04 Datasheet](https://cdn.sparkfun.com/datasheets/Sensors/Proximity/HCSR04.pdf)
