@@ -12,13 +12,13 @@ on-board via **rl_brain_node.py** for continuous improvement.
 
 ---
 
-## 1 · TL;DR Boot-Up  
-    # ① Flash Ubuntu 20.04 to the µSD card, boot once to expand the FS
-    # ② SSH in and run:
-    git clone https://github.com/<your-org>/pollux-AMR.git
-    cd pollux-AMR
-    chmod +x setup_env.sh && ./setup_env.sh
-    # ③ Reboot (systemd service now auto-starts every node)
+## 1 · Boot-Up  
+    ① Flash Ubuntu 20.04 to the µSD card, boot once to expand the FS
+    ② SSH in and run:
+    ```git clone https://github.com/nhathout/pollux-AMR.git```
+    ```cd pollux-AMR```
+    ````chmod +x setup_env.sh && ./setup_env.sh```
+    ③ Reboot (systemd service now auto-starts every node)
 
 *Need only a demo video?*
 - Links to video demonstrations of Pollux's major functionalities (UV indicator LED, cliff detection, and obstacle avoidance):
