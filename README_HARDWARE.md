@@ -1,92 +1,106 @@
-# Pollux-AMR Hardware Report
+# Pollux-AMR · Hardware Report  
+_Last updated: 27 Apr 2025_
 
-## Overview
-Pollux-AMR is an autonomous countertop-cleaning robot. Its hardware components are designed to detect cliffs (countertop edges), avoid obstacles, and perform UV sanitation.
+---
 
-## Hardware Components
-- **Robot Base:** Two motorized wheels, one castor wheel, platform for sensor mounting.
-- **Ultrasonic Sensors:** 
-  - 3× Downward-facing (cliff detection)
-  - 2× Forward-facing (obstacle detection)
-- **Adafruit MPU‑6050 IMU:** Accelerometer and gyroscope for orientation and motion data.
-- **LED Subsystem:** UV LED strip for sanitization and indicator LEDs for feedback.
-- **Stepper Motors & Drivers:** Controlled via a DualMotorController.
-- **Raspberry Pi 4 Model B (4GB RAM):** Main computing platform (Ubuntu 20.04 headless).
+## 1 · Overview  
+Pollux-AMR is an autonomous countertop-cleaning robot that:  
 
-## Power Requirements
-- **Input Voltage:** 5V DC (via Raspberry Pi 4)
-- **Motor Driver Voltage:** 6-12V (via external power if necessary)
-- **Current Consumption:** ~1-2A under normal operation, higher during motor startup
-- **Power Supply Model:** Standard 5V 3A USB-C supply for Raspberry Pi 4
+* **Detects cliffs** (counter-top edges) with three downward-facing HC-SR04 sensors.  
+* **Avoids obstacles** with two forward-facing HC-SR04 sensors.  
+* **Performs UV-C sanitation** via an LED strip that is automatically disabled if the robot tilts.  
+* **Runs untethered** on a Raspberry Pi 4 Model B (Ubuntu 20.04 headless, ROS Noetic).
 
-## Setup Instructions
-1. **Mount Ultrasonic Sensors:** Secure sensors in the specified positions (3 downward, 2 forward).
-2. **Connect IMU (MPU6050):** Wire to Raspberry Pi GPIO (I2C lines).
-3. **Motor and Motor Driver:** Wire motor driver to Pi GPIOs and connect motors.
-4. **LED Subsystem:** Connect LED strip and indicator LEDs to designated Pi GPIOs.
-5. **Final Assembly:** Mount everything securely onto the robot base; ensure proper cable management.
+---
 
-## Schematics and PCB /  CAD
-- **CAD Files:**
-![Full_housing](images/Full_housing.png)
-![corner_view_housing](images/corner_view_housing.png)
-![top_view_housing](images/top_view_housing.png)
+## 2 · Hardware Components  
 
-[Download Final Housing (STEP)](hardware/Final_housing.step)
+| Sub-assembly | Notes |
+|--------------|-------|
+| **Robot base** | Two DC gearmotors for drive, one caster for balance, 3-D-printed chassis. |
+| **Ultrasonic array** | 3 × downward (cliff) + 2 × forward (obstacle). |
+| **IMU** | Adafruit MPU-6050 accelerometer / gyroscope (I²C). |
+| **LED subsystem** | UV-C strip for sanitation + indicator LEDs. |
+| **Drive electronics** | Dual H-bridge; controlled by `motor_cmd_node.py`. |
+| **Compute** | Raspberry Pi 4 (4 GB RAM) running all ROS nodes. |
 
+---
 
-![Motor_mount](images/motor_mount.png)
+## 3 · Power Requirements  
 
-[Download Motor Mount (STEP)](hardware/Motor_mount.step)
+| Rail | Voltage | Typical Current | Source |
+|------|---------|-----------------|--------|
+| 5 V (logic / UV-C) | 5 V DC | 1 A | USB-C PSU (3 A headroom) |
+| Motor rail | 6 – 12 V | 0.8 – 1.5 A (startup) | External DC boost / Li-ion pack |
 
+> **Hint:** Brown-outs during motor spin-up are the #1 cause of random Pi resets—use separate supplies or a 2 A buck converter.
 
-![Battery Mount](images/battery_mount.png)
+---
 
-[Download Battery Mount (STEP)](hardware/Battery_mount.step)
+## 4 · Setup Instructions  
 
+1. **Mount ultrasonic sensors** – three downward at the front edge, two forward on the bumper.  
+2. **Wire the MPU-6050** – SDA to GPIO 2, SCL to GPIO 3, 3V3 & GND to Pi header.  
+3. **Install motors & driver** – connect IN1/IN2/ENA/ENB to Pi GPIOs as specified in `motor_cmd_node.py`.  
+4. **Connect LEDs** – UV-C strip to FET driver (GPIO 18 PWM), status LEDs to GPIO 23/24.  
+5. **Final assembly** – secure wiring, tape battery, snap lid; verify nothing protrudes below chassis.
 
-![Pi Mount](images/pi_mount.png)
+---
 
-[Download PI Mount (STEP)](hardware/PI_mount.step)
+## 5 · Schematics, PCB & CAD  
 
+**CAD renders**
 
-![IMU mount](images/imu_mount.png)
+![Full_housing](images/Full_housing.png)  
+![Corner view](images/corner_view_housing.png)  
+![Top view](images/top_view_housing.png)
 
-[Download IMU Mount (STEP)](hardware/IMU_mount.step)
+Downloadable STEP files  
 
+* [Final Housing](hardware/Final_housing.step)  
+* [Motor Mount](hardware/Motor_mount.step)  
+* [Battery Mount](hardware/Battery_mount.step)  
+* [Pi Mount](hardware/PI_mount.step)  
+* [IMU Mount](hardware/IMU_mount.step)
 
-- **3D Printed Housing Layout**
+**3-D-printed layout**
 
-![3d_housing_layout](images/3d_Housing_Layout.png)
+![Housing layout](images/3d_Housing_Layout.png)
 
-- **Schematics:** [Provided separately in PDF/ and EDA files]
-- **PCB Documentation:** [Provided separately in PCB/ folder]
+*Complete KiCad schematics* are in **PDF/**, and Gerbers plus board files in **PCB/**.
 
-## Vendor Information & Bill of Materials (BOM) with Cost Breakdown
+---
 
-| Item # | Description              | Vendor                  | Quantity | Unit Cost | Extended Cost |
-|:------:|:-------------------------|:------------------------|:--------:|:---------:|:-------------:|
-|   1    | Ultrasonic Sensors        | Generic                 | 5        | $2        | $10           |
-|   2    | IMU Sensor                | Adafruit                | 1        | $15       | $15           |
-|   3    | Stepper Motors            | Generic                 | 2        | $3        | $6            |
-|   4    | Raspberry Pi 4 Model B    | Raspberry Pi Foundation | 1        | $45       | $45           |
-|   5    | 8mW UV-C Light            | Amazon                  | 5        | $12       | $60           |
-|   6    | Lithium Battery           | Energizer               | 1        | $40       | $40           |
-|   7    | Wheels                    | Amazon                  | 2        | $1        | $2            |
-|   8    | Caster Wheel              | Amazon                  | 1        | $2        | $2            |
-|   9    | Magnets                   | Amazon                  | 18       | $0.20     | $3.60         |
-|   10   | Filament for Housing      | Amazon                  | 1        | $15       | $15           |
+## 6 · Bill of Materials (Beta build)
 
-**Beta Version Total Cost:** **$198.60**
+| # | Part | Vendor | Qty | Unit $ | Ext $ |
+|:-:|------|--------|:---:|:------:|:-----:|
+| 1 | HC-SR04 ultrasonic | Generic | 5 | 2 | 10 |
+| 2 | MPU-6050 IMU | Adafruit | 1 | 15 | 15 |
+| 3 | DC gear-motor | Generic | 2 | 3 | 6 |
+| 4 | Raspberry Pi 4 (4 GB) | Raspberry Pi Foundation | 1 | 45 | 45 |
+| 5 | 8 mW UV-C LED | Amazon | 5 | 12 | 60 |
+| 6 | Li-ion battery pack | Energizer | 1 | 40 | 40 |
+| 7 | Drive wheels | Amazon | 2 | 1 | 2 |
+| 8 | Caster wheel | Amazon | 1 | 2 | 2 |
+| 9 | Neodymium magnets | Amazon | 18 | 0.20 | 3.60 |
+| 10 | PETG filament | Amazon | 1 | 15 | 15 |
 
+**Total (Beta)**  ≈ **$198.60**
 
-## Clear picture of system inside the enclosure
+---
 
-![Inside Enclosure](images/inside_enclosure.png)
+## 7 · System Photos  
 
-![Enclosure with lid on](images/enclosure_lid_on.png)
+![Inside enclosure](images/inside_enclosure.png)  
+![Lid on](images/enclosure_lid_on.png)
 
-## Reference Materials
-- [HC-SR04 Datasheet](https://cdn.sparkfun.com/datasheets/Sensors/Proximity/HCSR04.pdf)
-- [MPU-6050 Datasheet](https://invensense.tdk.com/wp-content/uploads/2015/02/MPU-6000-Datasheet1.pdf)
-- [Raspberry Pi 4 Documentation](https://www.raspberrypi.org/documentation/)
+---
+
+## 8 · Reference Materials  
+
+* HC-SR04 Datasheet – <https://cdn.sparkfun.com/datasheets/Sensors/Proximity/HCSR04.pdf>  
+* MPU-6050 Datasheet – <https://invensense.tdk.com/wp-content/uploads/2015/02/MPU-6000-Datasheet1.pdf>  
+* Raspberry Pi 4 Documentation – <https://www.raspberrypi.org/documentation/>
+
+---
