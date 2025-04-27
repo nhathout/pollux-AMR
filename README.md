@@ -1,5 +1,5 @@
 # pollux-AMR
-![Maintained Badge](https://img.shields.io/badge/status-stable-yellow)<br>
+![Maintained Badge](https://img.shields.io/badge/status-stable-green)<br>
 An autonomous countertop‑cleaning robot designed to avoid falling off edges (“cliffs”) and colliding with obstacles. Pollux‑AMR uses multiple ultrasonic sensors, an IMU, and ROS Noetic to orchestrate all hardware and software interactions. The system can optionally incorporate reinforcement learning for more advanced navigation or policy‑based behaviors.
 
 ## Features
