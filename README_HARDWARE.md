@@ -26,8 +26,38 @@ Pollux-AMR is an autonomous countertop-cleaning robot. Its hardware components a
 4. **LED Subsystem:** Connect LED strip and indicator LEDs to designated Pi GPIOs.
 5. **Final Assembly:** Mount everything securely onto the robot base; ensure proper cable management.
 
-## Schematics and PCB / CAD
-- **CAD Files:** [Provided separately in CAD/ folder]
+## Schematics and PCB /  CAD
+- **CAD Files:**
+![Full_housing](images/Full_housing.png)
+![corner_view_housing](images/corner_view_housing.png)
+![top_view_housing](images/top_view_housing.png)
+
+[Download Final Housing (STEP)](hardware/Final_housing.step)
+
+
+![Motor_mount](images/motor_mount.png)
+
+[Download Motor Mount (STEP)](hardware/Motor_mount.step)
+
+
+![Battery Mount](images/battery_mount.png)
+
+[Download Battery Mount (STEP)](hardware/Battery_mount.step)
+
+
+![Pi Mount](images/pi_mount.png)
+
+[Download PI Mount (STEP)](hardware/PI_mount.step)
+
+
+![IMU mount](images/imu_mount.png)
+
+[Download IMU Mount (STEP)](hardware/IMU_mount.step)
+
+
+- **3D Printed Housing Layout**
+![3d_housing_layout](\images\3d_Housing_Layout.png)
+
 - **Schematics:** [Provided separately in PDF/ and EDA files]
 - **PCB Documentation:** [Provided separately in PCB/ folder]
 
@@ -45,8 +75,3 @@ Pollux-AMR is an autonomous countertop-cleaning robot. Its hardware components a
 - [HC-SR04 Datasheet](https://cdn.sparkfun.com/datasheets/Sensors/Proximity/HCSR04.pdf)
 - [MPU-6050 Datasheet](https://invensense.tdk.com/wp-content/uploads/2015/02/MPU-6000-Datasheet1.pdf)
 - [Raspberry Pi 4 Documentation](https://www.raspberrypi.org/documentation/)
-
-## Photos
-_Photos of the assembled robot are provided in the media/ folder, showing multiple angles inside the enclosure._
-
----
