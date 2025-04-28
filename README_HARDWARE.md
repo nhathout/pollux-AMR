@@ -54,11 +54,11 @@ Pollux-AMR is an autonomous countertop-cleaning robot that:
 <img src="images/Full_housing.png" width="800" height="600" />
 <img src="images/corner_view_housing.png" width="800" height="600" />
 <img src="images/top_view_housing.png" width="800" height="600" />
+<img src="images/motor_mount.png" width="800" height="600" />
+<img src="images/battery_mount.png" width="800" height="600" />
+<img src="images/pi_mount.png" width="800" height="600" />
+<img src="images/imu_mount.png" width="800" height="600" />
 
-![Motor mount](images/motor_mount.png)
-![Battery mount](images/battery_mount.png)
-![Pi mount](images/pi_mount.png)
-![IMU mount](images/imu_mount.png)
 
 **Downloadable STEP files:**  
 
