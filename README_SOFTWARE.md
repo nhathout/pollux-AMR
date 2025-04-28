@@ -6,9 +6,9 @@
 2. Dependency graph  
 3. Dev & build toolchain  
 4. Fresh install  
-5. Runtime operations  
-6. Testing & CI  
-7. Future improvements
+5. Runtime operations   
+6. Future improvements
+7. Appendix
 
 ---
 
@@ -87,3 +87,10 @@ Flash *ubuntu-20.04.6-preinstalled-server-arm64+raspi.img.xz*, enable SSH, set h
 * pigpio waveforms for non-blocking ultrasonic timing  
 * ROS dynamic-reconfigure for live tuning  
 * GitOps OTA via fluxcd
+
+---
+
+## 7 · Appendix
+
+[![Press Here to watch the RL model work in simulation!](/images/model_demo.png)](https://drive.google.com/file/d/1HToGHO0mSNwZyYFLXsZBkUujIVhTotNM/view?usp=sharing)
+**Media 1:** The linked clip showcases our custom reinforcement learning model operating within a custom simulation environment rendered using matplotlib. In the video, the agent successfully avoids falling off cliffs and colliding with obstacles, all while effectively exploring and covering roughly 40-60% of the available surface area. The specifics of the model are explained in more detail in our "Supporting Documents" section above.<br><br>
