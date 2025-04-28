@@ -50,10 +50,10 @@ Pollux-AMR is an autonomous countertop-cleaning robot that:
 ## 5 · Schematics, PCB & CAD  
 
 **CAD renders**
-
-![Full_housing](images/Full_housing.png)  
-![Corner view](images/corner_view_housing.png)  
-![Top view](images/top_view_housing.png)
+ 
+<img src="images/Full_housing.png" width="800" height="600" />
+<img src="images/corner_view_housing.png" width="800" height="600" />
+<img src="images/top_view_housing.png" width="800" height="600" />
 
 Downloadable STEP files  
 
