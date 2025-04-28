@@ -1,4 +1,12 @@
 #!/usr/bin/env python3
+
+"""
+This ROS node reads distance data from two forward-facing ultrasonic sensors
+and publishes the measurements to the topic /pollux/ultrasonic_2 at 5Hz using
+a Float32MultiArray message. The sensor pins are configured through a dictionary, and
+readings are accessed via a reusable UltrasonicArray class from ultrasonic module.
+"""
+
 import os
 import sys
 import time

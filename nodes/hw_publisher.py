@@ -1,4 +1,11 @@
 #!/usr/bin/env python3
+
+"""
+hw_publisher.py collects IMU and ultrasonic sensor data from the Pollux hardware and publishes it to
+/pollux/imu and /pollux/ultrasonic_hw. It uses a custom IMUController and UltrasonicArray classes
+to access the hardware. This node enables the robot to sense motion and detect nearby surfaces for navigation.
+"""
+
 import os, sys, time, rospy, RPi.GPIO as GPIO
 from sensor_msgs.msg import Imu
 from std_msgs.msg import Float32MultiArray

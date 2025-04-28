@@ -1,4 +1,13 @@
 #!/usr/bin/env python3
+
+"""
+This ROS node controls three indicator LEDson the Pollux robot using GPIO pins.
+It subscribes to the /pollux/led_cmd topic and responds to the integer commands to
+toggle the UV sanitize LED, the indicator LED, and the "robot on" LED. the sanitize
+and indicator LEs operate together, while the "robot on" LED is turned on at full
+brightness. Unused or invalid commands are ignored or logged for debugging.
+"""
+
 import os, sys, rospy, RPi.GPIO as GPIO
 from std_msgs.msg import Int32
 

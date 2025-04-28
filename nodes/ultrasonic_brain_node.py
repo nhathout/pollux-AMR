@@ -1,5 +1,14 @@
 #!/usr/bin/env python3
 
+"""
+This ROS node, `ultrasonic_brain_node`, performs obstacle avoidance based on readings from two front-facing ultrasonic
+sensors, received via the `/pollux/ultrasonic_2` topic. When an obstacle is detected within a configurable threshold,
+the node stops the robot, backs up, spins away from the closer obstacle, and resumes forward motion. It publishes motor
+commands to the `/pollux/motor_cmd` topic using a set of predefined action codes consistent with those in
+`motor_cmd_node.py`, which executes the actual motor control. This node depends on `motor_cmd_node.py` to interpret
+these integer commands and actuate the motors accordingly.
+"""
+
 import os
 import sys
 import time

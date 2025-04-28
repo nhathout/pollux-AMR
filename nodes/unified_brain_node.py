@@ -1,5 +1,13 @@
 #!/usr/bin/env python3
 
+"""
+This ROS node handles both cliff anf front obstacle detection for Pollux by subscribing
+to ultrasonic sensors and publishing motor commands. It stops and backs up when a cliff
+or front obstacle is detected, rotating and optionally spinning to reorient the robot before
+resuming forward motion. A timer ensures the robot keeps moving if idle, and debounce logic
+prevents repeated triggers
+"""
+
 import os
 import sys
 import time
