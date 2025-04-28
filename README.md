@@ -79,6 +79,7 @@ on-board via **rl_brain_node.py** for continuous improvement.
 
 ## 6 · Further Reading  
 > DISCLAIMER: Some links and documents may require BU account to view.
+
 Software stack → README_SOFTWARE.md  
 Hardware build → README_HARDWARE.md  
 
