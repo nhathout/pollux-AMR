@@ -78,10 +78,13 @@ on-board via **rl_brain_node.py** for continuous improvement.
 ---
 
 ## 6 · Further Reading  
+> DISCLAIMER: Some links and documents may require BU account to view.
 Software stack → README_SOFTWARE.md  
 Hardware build → README_HARDWARE.md  
 
 User Manual → [click here](https://docs.google.com/document/d/1WDNQtBAzQioiVHYzoj2xVuRMR3jV1yGgZe9JvNC5dmk/edit?usp=sharing)<br><br>
+
+Customer Installation Report → [click here](https://docs.google.com/document/d/1myD4TDwbz6tZQjw0WgdVfFCGG7cAGCFSI_ILjvoBSKc/edit?usp=sharing)
 
 Final Test Plan & Report → [click here](https://docs.google.com/document/d/1nLfvciRge8nUAEQmeBG3rHHYXOoPHTD_1vJB__G8N-4/edit?usp=sharing)
 
