@@ -55,7 +55,12 @@ Pollux-AMR is an autonomous countertop-cleaning robot that:
 <img src="images/corner_view_housing.png" width="800" height="600" />
 <img src="images/top_view_housing.png" width="800" height="600" />
 
-Downloadable STEP files  
+![Motor mount](images/motor_mount.png)
+![Battery mount](images/battery_mount.png)
+![Pi mount](images/pi_mount.png)
+![IMU mount](images/imu_mount.png)
+
+**Downloadable STEP files:**  
 
 * [Final Housing](hardware/Final_housing.step)  
 * [Motor Mount](hardware/Motor_mount.step)  
@@ -98,6 +103,9 @@ Downloadable STEP files
 ---
 
 ## 8 · Reference Materials  
+
+* User Manual - [click here](https://docs.google.com/document/d/1WDNQtBAzQioiVHYzoj2xVuRMR3jV1yGgZe9JvNC5dmk/edit?usp=sharing)
+* Final Test Plan & Report - [click here](https://docs.google.com/document/d/1nLfvciRge8nUAEQmeBG3rHHYXOoPHTD_1vJB__G8N-4/edit?usp=sharing)
 
 * HC-SR04 Datasheet – <https://cdn.sparkfun.com/datasheets/Sensors/Proximity/HCSR04.pdf>  
 * MPU-6050 Datasheet – <https://invensense.tdk.com/wp-content/uploads/2015/02/MPU-6000-Datasheet1.pdf>  
