@@ -63,11 +63,17 @@ class PolluxEnv(gym.Env):
         self.acc_xy = [0.,0.]
 
         rospy.Subscriber(BOTTOM_TOPIC, Float32MultiArray,
-                        self._bottom_cb, queue_size=5)
+                         self._bottom_cb, queue_size=5)
         rospy.Subscriber(FRONT_TOPIC,  Float32MultiArray,
-                        self._front_cb,  queue_size=5)
+                         self._front_cb,  queue_size=5)
         rospy.Subscriber(IMU_TOPIC,    Imu,
-                        self._imu_cb,    queue_size=5)
+                         self._imu_cb,   queue_size=5)
+        
+        def _bottom_cb(self, msg):
+            self.bottom = [max(d, 0.0) for d in msg.data[:3]]
+
+        def _front_cb(self, msg):
+            self.front = [max(d, 0.0) for d in msg.data[:2]]
 
         self.action_space      = spaces.Discrete(6)
         self.observation_space = spaces.Box(0,1,(7,),np.float32)
@@ -219,8 +225,8 @@ def main():
                     act,_=model.predict(obs,deterministic=True)
 
                     # ② safety filter may run a blocking override
-                    flat_obs = obs.squeeze()
-                    override=shield.filter(flat_obs)
+                    override = shield.filter(obs.squeeze())
+
                     if not override:
                         env.envs[0].cmd_pub.publish(ACT_MAP[int(act)])
 
@@ -247,9 +253,8 @@ def main():
             # manual rollout to insert the shield
             obs=env.reset()
             for _ in range(CTRL_HZ*4):                # 2 Hz * 4 s = 8 steps
-                act,_=model.predict(obs,deterministic=False)
-                flat_obs = obs.squeeze()
-                if shield.filter(flat_obs):                # override handled episode
+                act,_ = model.predict(obs, deterministic=False)
+                if shield.filter(obs.squeeze()):
                     break
                 obs,_,_,_=env.step(act)
             model.learn(total_timesteps=CTRL_HZ*4,reset_num_timesteps=False,callback=cb)
