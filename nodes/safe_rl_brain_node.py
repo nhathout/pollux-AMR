@@ -63,10 +63,10 @@ class PolluxEnv(gym.Env):
         self.acc_xy = [0.,0.]
 
         rospy.Subscriber(BOTTOM_TOPIC, Float32MultiArray,
-                         lambda m: setattr(self,'bottom', list(m.data[:3])), 5)
+                         lambda m: setattr(self,'bottom', list(m.data[:3])), queue_size=5)
         rospy.Subscriber(FRONT_TOPIC,  Float32MultiArray,
-                         lambda m: setattr(self,'front',  list(m.data[:2])), 5)
-        rospy.Subscriber(IMU_TOPIC,    Imu, self._imu_cb, 5)
+                         lambda m: setattr(self,'front',  list(m.data[:2])), queue_size=5)
+        rospy.Subscriber(IMU_TOPIC,    Imu, self._imu_cb, queue_size=5)
 
         self.action_space      = spaces.Discrete(6)
         self.observation_space = spaces.Box(0,1,(7,),np.float32)
@@ -177,7 +177,7 @@ class SafetyShield:
 
 # ────────────────────────────────────────────────────────────────────
 def parse_args():
-    d="~/catkin_ws/src/pollux-AMR/models/pollux_rl_model.zip"
+    d="~/catkin_ws/src/pollux-AMR/models/safe_pollux_model_.zip"
     p=argparse.ArgumentParser()
     p.add_argument("--mode",choices=["train","resume","infer"],default="infer")
     p.add_argument("--model",type=str,default=d)
