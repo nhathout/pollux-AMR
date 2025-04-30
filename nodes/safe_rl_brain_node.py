@@ -63,10 +63,11 @@ class PolluxEnv(gym.Env):
         self.acc_xy = [0.,0.]
 
         rospy.Subscriber(BOTTOM_TOPIC, Float32MultiArray,
-                         lambda m: setattr(self,'bottom', list(m.data[:3])), queue_size=5)
+                        self._bottom_cb, queue_size=5)
         rospy.Subscriber(FRONT_TOPIC,  Float32MultiArray,
-                         lambda m: setattr(self,'front',  list(m.data[:2])), queue_size=5)
-        rospy.Subscriber(IMU_TOPIC,    Imu, self._imu_cb, queue_size=5)
+                        self._front_cb,  queue_size=5)
+        rospy.Subscriber(IMU_TOPIC,    Imu,
+                        self._imu_cb,    queue_size=5)
 
         self.action_space      = spaces.Discrete(6)
         self.observation_space = spaces.Box(0,1,(7,),np.float32)
@@ -218,7 +219,8 @@ def main():
                     act,_=model.predict(obs,deterministic=True)
 
                     # ② safety filter may run a blocking override
-                    override=shield.filter(obs)
+                    flat_obs = obs.squeeze()
+                    override=shield.filter(flat_obs)
                     if not override:
                         env.envs[0].cmd_pub.publish(ACT_MAP[int(act)])
 
@@ -246,7 +248,8 @@ def main():
             obs=env.reset()
             for _ in range(CTRL_HZ*4):                # 2 Hz * 4 s = 8 steps
                 act,_=model.predict(obs,deterministic=False)
-                if shield.filter(obs):                # override handled episode
+                flat_obs = obs.squeeze()
+                if shield.filter(flat_obs):                # override handled episode
                     break
                 obs,_,_,_=env.step(act)
             model.learn(total_timesteps=CTRL_HZ*4,reset_num_timesteps=False,callback=cb)
