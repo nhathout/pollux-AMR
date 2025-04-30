@@ -38,7 +38,7 @@ SPIN_L, SPIN_R, ROT180 = 4,5,7
 ACT_MAP = {0:FWD,1:BWD,2:SPIN_L,3:SPIN_R,4:STOP,5:ROT180}
 
 # ─── hazard thresholds (same as unified) ────────────────────────────
-CLIFF_T         =  8.5   # cm  (bottom)
+CLIFF_T         =  10   # cm  (bottom)
 OBST_T          = 12.0   # cm  (front)
 CLIFF_BACK_SECS = 2.0    # per backward pass
 ROT180_SECS     = 4.0
