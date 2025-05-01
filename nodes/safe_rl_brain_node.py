@@ -39,6 +39,13 @@ BACK_SEC, ROT_SEC = 2.0, 4.0
 SPIN_SEC          = 2.0
 CTRL_HZ           = 2                              # agent control rate
 
+COVERAGE_BONUS      = 1.2     # reward/10 cm of novel displacement
+BACKWARD_BIG_PENALTY= 2.0     # flat hit every time it blindly backs up
+OSCILLATE_PENALTY   = 0.25    # if it moves < 2 cm since last step
+STUCK_STEPS         = 4       # how many identical obs before “stuck”
+ROT_AFTER_BWD_BONUS = 3.0     # for {BWD➜spin/rot} pattern
+                               # (helps it finish escapes quickly)
+
 # ═════════════════ Gym ENV ════════════════════════════════════════
 class PolluxEnv(gym.Env):
     metadata = {}
@@ -47,6 +54,9 @@ class PolluxEnv(gym.Env):
     def __init__(self):
         super().__init__()
         self.cmd_pub = rospy.Publisher(CMD_T, Int32, queue_size=4)
+
+        # state to detect oscillation ──
+        self.same_obs_ctr = 0
 
         self.bottom = np.zeros(3, np.float32)
         self.front  = np.zeros(2, np.float32)
@@ -90,23 +100,44 @@ class PolluxEnv(gym.Env):
     def _reward(self, act, obs):
         b_cm, f_cm = obs[:3]*self.MAX_CM, obs[3:5]*self.MAX_CM
         cliff = (b_cm > CLIFF_CM).any()
-        left, right = 0 < f_cm[0] < OBST_CM, 0 < f_cm[1] < OBST_CM
-        both = left and right
-
+        L, R  = 0 < f_cm[0] < OBST_CM, 0 < f_cm[1] < OBST_CM
+        both  = L and R
         r = 0.0
-        if cliff:  r -= 5.0
-        elif both: r -= 2.0
-        if left  and ACTION_MAP[act] == SPIN_R: r += 1.0
-        if right and ACTION_MAP[act] == SPIN_L: r += 1.0
-        if ACTION_MAP[act] == FWD and self.prev_act == ROT: r += 3.0
 
+        # ① HARD penalties for hitting hazards
+        if cliff:      r -= 10.0
+        elif both:     r -= 4.0
+
+        # ② Correct single-side avoidance
+        if   L and ACTION_MAP[act] == SPIN_R: r += 2.0
+        elif R and ACTION_MAP[act] == SPIN_L: r += 2.0
+
+        # ③ Pattern bonus: back-up → rotate/spin once → forward
+        if (self.prev_act == 1                                   # BWD
+            and ACTION_MAP[act] in {SPIN_L, SPIN_R, ROT}):
+            r += ROT_AFTER_BWD_BONUS
+
+        # ④ Coverage – reward real displacement in cm
         if self.prev_obs is not None:
-            diff = np.linalg.norm(obs - self.prev_obs)
-            r += 0.5 * diff
-            if diff < 0.01: r -= 0.05
+            delta = np.linalg.norm((obs - self.prev_obs) * self.MAX_CM)
+            r += COVERAGE_BONUS * (delta / 10.0)                 # ≈ 10 cm units
 
-        if ACTION_MAP[act] == BWD and not (cliff or both): r -= 0.2
-        if self.prev_act is not None and act == self.prev_act: r -= 0.1
+            # detect oscillation / stuck
+            if delta < 2.0:
+                self.same_obs_ctr += 1
+                if self.same_obs_ctr >= STUCK_STEPS:
+                    r -= OSCILLATE_PENALTY
+            else:
+                self.same_obs_ctr = 0
+
+        # ⑤ Discourage blind reversing
+        if ACTION_MAP[act] == BWD and not (cliff or both):       # not an escape
+            r -= BACKWARD_BIG_PENALTY
+
+        # ⑥ Mild step cost for performing *exactly* the same action
+        if self.prev_act is not None and act == self.prev_act:
+            r -= 0.1
+
         return r
 
     # ── Gym API ────────────────────────────────────────────────────
@@ -176,7 +207,7 @@ class Shield:
             self.last_front = now; self._obst(left, right); return True
         return False
 
-# ═════════════════ argparse / main ════════════════════════════════
+# ═════════ argparse / entry-point (unchanged) ══════════════════════
 def _args():
     d = "~/catkin_ws/src/pollux-AMR/models/safe_pollux_model.zip"
     P = argparse.ArgumentParser()
@@ -187,14 +218,15 @@ def _args():
     P.add_argument("--save-every", type=int, default=25_000)
     return P.parse_args()
 
-def main():
-    args = _args()
+# ═════════════════════════ main() ═════════════════════════════════
+def main() -> None:
+    args     = _args()
     rospy.init_node("safe_rl_brain_node", anonymous=True)
 
-    env    = VecMonitor(DummyVecEnv([lambda: PolluxEnv()]))
-    shield = Shield(env.envs[0].cmd_pub)
+    env      = VecMonitor(DummyVecEnv([lambda: PolluxEnv()]))
+    shield   = Shield(env.envs[0].cmd_pub)
 
-    model_p = Path(args.model).expanduser()
+    model_p  = Path(args.model).expanduser()
     model_p.parent.mkdir(parents=True, exist_ok=True)
 
     if args.mode == "train":
@@ -202,14 +234,25 @@ def main():
                     learning_rate=1e-3, n_steps=512,
                     batch_size=64, ent_coef=0.01,
                     verbose=1, device="cpu")
-    else:
+    else:                                           # infer / resume
         if not model_p.exists():
-            rospy.logerr(f"Model {model_p} not found"); return
+            rospy.logerr(f"Model file {model_p} not found"); return
         model = PPO.load(model_p, env=env, device="cpu")
 
-    # ─── inference ────────────────────────────────────────────────
+    # ───────────────────── shutdown hook ──────────────────────────
+    def _graceful_shutdown() -> None:
+        rospy.loginfo("safe_rl_brain_node – shutting down, saving model…")
+        try:
+            model.save(model_p)
+            env.close()            # publishes a final STOP
+        except Exception as e:     # never raise during shutdown
+            rospy.logwarn(f"Save/close failed: {e}")
+
+    rospy.on_shutdown(_graceful_shutdown)
+
+    # ───────────────────── inference mode ─────────────────────────
     if args.mode == "infer":
-        rospy.loginfo("Inference (shield active)  –  Ctrl-C to quit")
+        rospy.loginfo("Inference (shield active) – Ctrl-C to quit")
         try:
             while not rospy.is_shutdown():
                 obs = env.reset()
@@ -219,40 +262,48 @@ def main():
                         env.envs[0].cmd_pub.publish(ACTION_MAP[int(act)])
                     env.envs[0].rate.sleep()
                     obs = env.envs[0]._get_obs()
-        except KeyboardInterrupt:
-            pass
-        finally:
-            env.close()
+        except rospy.ROSInterruptException:
+            pass        # handled by on_shutdown
         return
 
-    # ─── train / resume ───────────────────────────────────────────
-    next_ck = args.save_every
-    def ckpt(locals_, _globals):
-        nonlocal next_ck
-        steps = locals_["self"].num_timesteps
-        if steps >= next_ck:
-            f = model_p.parent / f"{model_p.stem}_{steps//1000}k.zip"
-            rospy.loginfo(f"Checkpoint → {f}")
-            locals_["self"].save(f); next_ck += args.save_every
+    # ───────────────────── training / resume ──────────────────────
+    next_ckpt = args.save_every
+    def _save_ckpt(lcl, _gl):
+        nonlocal next_ckpt
+        steps = lcl["self"].num_timesteps
+        if steps >= next_ckpt:
+            ck = model_p.parent / f"{model_p.stem}_{steps//1000}k.zip"
+            rospy.loginfo(f"Checkpoint → {ck}")
+            lcl["self"].save(ck)
+            next_ckpt += args.save_every
         return True
 
     try:
-        total = 0
-        rospy.loginfo(f"Training for {args.timesteps:,} steps")
-        while total < args.timesteps and not rospy.is_shutdown():
+        total_steps = 0
+        rospy.loginfo(f"Training for {args.timesteps:,} SB-3 steps")
+        while total_steps < args.timesteps and not rospy.is_shutdown():
+
+            # manual roll-out (few seconds) so the shield can jump in
             obs = env.reset()
-            for _ in range(CTRL_HZ * 4):                   # ~4 s rollout
+            for _ in range(CTRL_HZ * 4):           # 4-second slice
                 act, _ = model.predict(obs, deterministic=False)
-                if shield.filter(obs): break
-                obs, _, _, _ = env.step(act); total += 1
-            model.learn(total_timesteps=CTRL_HZ * 4,
-                        reset_num_timesteps=False,
-                        callback=ckpt)
-    except KeyboardInterrupt:
-        rospy.logwarn("Interrupted – saving model")
-    finally:
-        rospy.loginfo(f"Saving final model → {model_p}")
-        model.save(model_p); env.close()
+                if shield.filter(obs):
+                    break                          # hazard handled – restart episode
+                obs, _, _, _ = env.step(act)
+
+            # now let SB-3 collect exactly n_steps (512) fresh samples
+            before = model.num_timesteps
+            model.learn(total_timesteps=512, reset_num_timesteps=False,
+                        callback=_save_ckpt)
+            after  = model.num_timesteps
+            total_steps += (after - before)
+
+        # make sure we always have a last checkpoint
+        if (next_ckpt - args.save_every) < args.timesteps:
+            model.save(model_p.parent / f"{model_p.stem}_final.zip")
+
+    except rospy.ROSInterruptException:
+        pass            # graceful_shutdown handles the rest
 
 # ───────────────────────────────────────────────────────────────────
 if __name__ == "__main__":
