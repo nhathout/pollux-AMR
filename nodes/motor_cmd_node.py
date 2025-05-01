@@ -38,15 +38,16 @@ def command_callback(msg):
         # Also slower
         motor_ctrl.move_backward(500, 3)
 
-    elif cmd == 2:  # turn left (not used in your code, presumably)
-        t1 = threading.Thread(target=motor_ctrl.motor_left.rotate,  args=(0,3))
-        t2 = threading.Thread(target=motor_ctrl.motor_right.rotate, args=(1200,3))
+    elif cmd == 2:        # gentle turn left 20°
+        steps = 400                     # ≈ 1/3 full spin
+        t1 = threading.Thread(target=motor_ctrl.motor_left.rotate,  args=(-steps,3))
+        t2 = threading.Thread(target=motor_ctrl.motor_right.rotate, args=( steps,3))
         t1.start(); t2.start(); t1.join(); t2.join()
 
-    elif cmd == 3:  # turn right
-
-        t1 = threading.Thread(target=motor_ctrl.motor_left.rotate,  args=(1200,3))
-        t2 = threading.Thread(target=motor_ctrl.motor_right.rotate, args=(0,3))
+    elif cmd == 3:        # gentle turn right 20°
+        steps = 400
+        t1 = threading.Thread(target=motor_ctrl.motor_left.rotate,  args=( steps,3))
+        t2 = threading.Thread(target=motor_ctrl.motor_right.rotate, args=(-steps,3))
         t1.start(); t2.start(); t1.join(); t2.join()
 
     elif cmd == 4:  # spin left
