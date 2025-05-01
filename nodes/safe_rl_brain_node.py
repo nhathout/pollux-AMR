@@ -1,13 +1,18 @@
 #!/usr/bin/env python3
 """
-safe_rl_brain_node.py
-────────────────────────────────────────────────────────────────────
-• PPO agent (SB-3) that learns coverage while a blocking “shield”
-  copied from unified_brain_node keeps the robot safe.
-• Reward: exploration, correct single-side turns, completing a
-  cliff/dual-wall routine; penalties for hazards & oscillation.
+safe_rl_brain_node.py  –  PPO + blocking safety shield
+Learn exploration / coverage, while never letting the robot drive off
+a cliff or ram a wall.  Fully self-contained ROS node.
+
+CLI examples
+------------
+# inference only (shield on, no learning)
+rosrun pollux_amr safe_rl_brain_node.py --mode infer
+
+# train for 200 k steps (checkpoints every 25 k)
+rosrun pollux_amr safe_rl_brain_node.py --mode train --timesteps 200000
 """
-# ------------------------------------------------------------------
+# ───────────────────────────────────────────────────────────────────
 import argparse, random, time
 from pathlib import Path
 
@@ -18,59 +23,58 @@ from std_msgs.msg import Float32MultiArray, Int32
 from stable_baselines3 import PPO
 from stable_baselines3.common.vec_env import DummyVecEnv, VecMonitor
 
-# ─── ROS topics & motor codes ──────────────────────────────────────
+# ─── topics & motor codes ─────────────────────────────────────────
 BOTTOM_T = "/pollux/ultrasonic_hw"
 FRONT_T  = "/pollux/ultrasonic_2"
 IMU_T    = "/pollux/imu"
 CMD_T    = "/pollux/motor_cmd"
 
 FWD, BWD, STOP       = 0, 1, 6
-SPIN_L, SPIN_R, ROT  = 4, 5, 7          # 180-degree rotate = 7
-ACTION_MAP           = {0: FWD, 1: BWD, 2: SPIN_L, 3: SPIN_R, 4: STOP, 5: ROT}
+SPIN_L, SPIN_R, ROT  = 4, 5, 7                 # 7 = 180° rotate
+ACTION_MAP = {0: FWD, 1: BWD, 2: SPIN_L, 3: SPIN_R, 4: STOP, 5: ROT}
 
-# ─── shield constants (mirrors unified_brain_node) ─────────────────
-CLIFF_CM, OBST_CM    = 10.0, 12.0       # hazard thresholds
-BACK_SEC, ROT_SEC    = 2.0, 4.0
-SPIN_SEC             = 2.0
-CTRL_HZ              = 2                # agent control frequency
+# ─── shield params (copied from unified_brain_node) ───────────────
+CLIFF_CM, OBST_CM = 10.0, 12.0
+BACK_SEC, ROT_SEC = 2.0, 4.0
+SPIN_SEC          = 2.0
+CTRL_HZ           = 2                              # agent control rate
 
-# ═════════════════════ ENVIRONMENT ═════════════════════════════════
+# ═════════════════ Gym ENV ════════════════════════════════════════
 class PolluxEnv(gym.Env):
-    """Real-robot Gym environment (never self-terminates)."""
-    metadata, MAX_CM, ACC_LIM = {}, 100.0, 3.0
+    metadata = {}
+    MAX_CM, ACC_LIM = 100.0, 3.0                   # normalisation
 
     def __init__(self):
         super().__init__()
         self.cmd_pub = rospy.Publisher(CMD_T, Int32, queue_size=4)
 
-        # rolling sensor buffers
         self.bottom = np.zeros(3, np.float32)
         self.front  = np.zeros(2, np.float32)
         self.acc_xy = [0.0, 0.0]
 
-        # — corrected Subscriber signatures —
-        rospy.Subscriber(topic=BOTTOM_T, data_class=Float32MultiArray,
-                         callback=self._bottom_cb, queue_size=5)
-        rospy.Subscriber(topic=FRONT_T,  data_class=Float32MultiArray,
-                         callback=self._front_cb,  queue_size=5)
-        rospy.Subscriber(topic=IMU_T,    data_class=Imu,
-                         callback=self._imu_cb,    queue_size=5)
+        # ---------- correct subscriber signatures ----------
+        rospy.Subscriber(BOTTOM_T, Float32MultiArray, self._bottom_cb,
+                         queue_size=5)
+        rospy.Subscriber(FRONT_T,  Float32MultiArray, self._front_cb,
+                         queue_size=5)
+        rospy.Subscriber(IMU_T,    Imu,               self._imu_cb,
+                         queue_size=5)
 
         self.action_space      = spaces.Discrete(6)
-        self.observation_space = spaces.Box(0, 1, (7,), dtype=np.float32)
+        self.observation_space = spaces.Box(0, 1, (7,), np.float32)
+        self.rate = rospy.Rate(CTRL_HZ)
 
-        self.rate      = rospy.Rate(CTRL_HZ)
-        self.prev_obs  = None
-        self.prev_act  = None
+        self.prev_obs = None
+        self.prev_act = None
 
-    # ── callbacks ──────────────────────────────────────────────────
-    def _bottom_cb(self, msg):
+    # ── callbacks (accept *args to be future-proof) ────────────────
+    def _bottom_cb(self, msg, *args):
         self.bottom[:] = np.maximum(msg.data[:3], 0.0)
 
-    def _front_cb(self, msg):
+    def _front_cb(self, msg, *args):
         self.front[:]  = np.maximum(msg.data[:2], 0.0)
 
-    def _imu_cb(self, msg):
+    def _imu_cb(self, msg, *args):
         self.acc_xy = [msg.linear_acceleration.x,
                        msg.linear_acceleration.y]
 
@@ -85,13 +89,13 @@ class PolluxEnv(gym.Env):
 
     def _reward(self, act, obs):
         b_cm, f_cm = obs[:3]*self.MAX_CM, obs[3:5]*self.MAX_CM
-        cliff      = (b_cm > CLIFF_CM).any()
+        cliff = (b_cm > CLIFF_CM).any()
         left, right = 0 < f_cm[0] < OBST_CM, 0 < f_cm[1] < OBST_CM
-        both       = left and right
+        both = left and right
 
         r = 0.0
-        if cliff:      r -= 5.0
-        elif both:     r -= 2.0
+        if cliff:  r -= 5.0
+        elif both: r -= 2.0
         if left  and ACTION_MAP[act] == SPIN_R: r += 1.0
         if right and ACTION_MAP[act] == SPIN_L: r += 1.0
         if ACTION_MAP[act] == FWD and self.prev_act == ROT: r += 3.0
@@ -114,14 +118,14 @@ class PolluxEnv(gym.Env):
     def step(self, act):
         self.cmd_pub.publish(ACTION_MAP[int(act)])
         self.rate.sleep()
-        obs  = self._get_obs()
-        rew  = self._reward(act, obs)
+        obs = self._get_obs()
+        rew = self._reward(act, obs)
         self.prev_obs, self.prev_act = obs, act
         return obs, rew, False, {}
 
     def close(self): self.cmd_pub.publish(STOP)
 
-# ═════════════════════ SAFETY SHIELD ═══════════════════════════════
+# ═══════════════════ SAFETY SHIELD ════════════════════════════════
 class Shield:
     def __init__(self, pub):
         self.pub = pub
@@ -156,9 +160,9 @@ class Shield:
             self.pub.publish(SPIN_L); rospy.sleep(SPIN_SEC)
         self.pub.publish(FWD); rospy.sleep(1.0)
 
-    # filter
-    def filter(self, obs_like) -> bool:
-        obs   = np.asarray(obs_like).squeeze()
+    # main entry
+    def filter(self, obs):
+        obs   = np.asarray(obs).squeeze()
         b_cm  = obs[:3] * 100.0
         f_cm  = obs[3:5] * 100.0
         cliff = (b_cm > CLIFF_CM).any()
@@ -172,7 +176,7 @@ class Shield:
             self.last_front = now; self._obst(left, right); return True
         return False
 
-# ═════════════════════ argparse / main ═════════════════════════════
+# ═════════════════ argparse / main ════════════════════════════════
 def _args():
     d = "~/catkin_ws/src/pollux-AMR/models/safe_pollux_model.zip"
     P = argparse.ArgumentParser()
@@ -194,7 +198,8 @@ def main():
     model_p.parent.mkdir(parents=True, exist_ok=True)
 
     if args.mode == "train":
-        model = PPO("MlpPolicy", env, learning_rate=1e-3, n_steps=512,
+        model = PPO("MlpPolicy", env,
+                    learning_rate=1e-3, n_steps=512,
                     batch_size=64, ent_coef=0.01,
                     verbose=1, device="cpu")
     else:
@@ -202,9 +207,9 @@ def main():
             rospy.logerr(f"Model {model_p} not found"); return
         model = PPO.load(model_p, env=env, device="cpu")
 
-    # ── inference ─────────────────────────────────────────────────
+    # ─── inference ────────────────────────────────────────────────
     if args.mode == "infer":
-        rospy.loginfo("Inference (shield ON) – Ctrl-C to quit")
+        rospy.loginfo("Inference (shield active)  –  Ctrl-C to quit")
         try:
             while not rospy.is_shutdown():
                 obs = env.reset()
@@ -220,34 +225,35 @@ def main():
             env.close()
         return
 
-    # ── train / resume ───────────────────────────────────────────
-    nxt = args.save_every
-    def ckpt_cb(locals_, _globals):
-        nonlocal nxt
+    # ─── train / resume ───────────────────────────────────────────
+    next_ck = args.save_every
+    def ckpt(locals_, _globals):
+        nonlocal next_ck
         steps = locals_["self"].num_timesteps
-        if steps >= nxt:
-            ck = model_p.parent / f"{model_p.stem}_{steps//1000}k.zip"
-            rospy.loginfo(f"Checkpoint → {ck}")
-            locals_["self"].save(ck); nxt += args.save_every
+        if steps >= next_ck:
+            f = model_p.parent / f"{model_p.stem}_{steps//1000}k.zip"
+            rospy.loginfo(f"Checkpoint → {f}")
+            locals_["self"].save(f); next_ck += args.save_every
         return True
 
     try:
-        total = 0; rospy.loginfo(f"Training for {args.timesteps:,} steps")
+        total = 0
+        rospy.loginfo(f"Training for {args.timesteps:,} steps")
         while total < args.timesteps and not rospy.is_shutdown():
             obs = env.reset()
-            for _ in range(CTRL_HZ * 4):                # 4-s rollout
+            for _ in range(CTRL_HZ * 4):                   # ~4 s rollout
                 act, _ = model.predict(obs, deterministic=False)
                 if shield.filter(obs): break
                 obs, _, _, _ = env.step(act); total += 1
             model.learn(total_timesteps=CTRL_HZ * 4,
                         reset_num_timesteps=False,
-                        callback=ckpt_cb)
+                        callback=ckpt)
     except KeyboardInterrupt:
         rospy.logwarn("Interrupted – saving model")
     finally:
         rospy.loginfo(f"Saving final model → {model_p}")
         model.save(model_p); env.close()
 
-# -------------------------------------------------------------------
+# ───────────────────────────────────────────────────────────────────
 if __name__ == "__main__":
     main()
