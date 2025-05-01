@@ -10,6 +10,7 @@ CLI
 ----
 rosrun pollux_amr safe_rl_brain_node.py --mode infer
 rosrun pollux_amr safe_rl_brain_node.py --mode train --timesteps 200000
+rosrun pollux_amr safe_rl_brain_node.py --mode resume --timesteps 40000
 """
 # ───────────────────────────────────────────────────────────────────
 import argparse, random
