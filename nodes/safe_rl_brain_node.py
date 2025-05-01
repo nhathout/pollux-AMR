@@ -58,11 +58,13 @@ class PolluxEnv(gym.Env):
         self.acc_xy = [0.0, 0.0]
 
         rospy.Subscriber(BOTTOM_T, Float32MultiArray,
-                         self._bottom_cb,  queue_size=5)
-        rospy.Subscriber(FRONT_T,  Float32MultiArray,
-                         self._front_cb,   queue_size=5)
+                 self._bottom_cb, queue_size=5)
+
+        rospy.Subscriber(FRONT_T, Float32MultiArray,
+                 self._front_cb,  queue_size=5)
+
         rospy.Subscriber(IMU_T,    Imu,
-                         self._imu_cb,     queue_size=5)
+                 self._imu_cb,    queue_size=5)
 
         self.action_space      = spaces.Discrete(6)
         self.observation_space = spaces.Box(0, 1, (7,), dtype=np.float32)
