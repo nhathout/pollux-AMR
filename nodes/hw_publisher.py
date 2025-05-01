@@ -1,46 +1,60 @@
 #!/usr/bin/env python3
-
 """
-hw_publisher.py collects IMU and ultrasonic sensor data from the Pollux hardware and publishes it to
-/pollux/imu and /pollux/ultrasonic_hw. It uses a custom IMUController and UltrasonicArray classes
-to access the hardware. This node enables the robot to sense motion and detect nearby surfaces for navigation.
+hw_publisher.py
+Publishes:
+  • /pollux/imu              (sensor_msgs/Imu)
+  • /pollux/ultrasonic_hw    (std_msgs/Float32MultiArray)
+
+Now bullet-proof against occasional bad/garbled distance readings.
 """
 
-import os, sys, time, rospy, RPi.GPIO as GPIO
+import os, sys, time, math, rospy, RPi.GPIO as GPIO
+import numpy as np
 from sensor_msgs.msg import Imu
 from std_msgs.msg import Float32MultiArray
 
-SCRIPT_DIR = os.path.dirname(__file__)
-POLLUX_AMR_DIR = os.path.abspath(os.path.join(SCRIPT_DIR, '../../pollux-AMR/hardware'))
-if POLLUX_AMR_DIR not in sys.path:
-    sys.path.insert(0, POLLUX_AMR_DIR)
+SCRIPT_DIR     = os.path.dirname(__file__)
+HW_DIR         = os.path.abspath(os.path.join(SCRIPT_DIR,
+                                              '../../pollux-AMR/hardware'))
+if HW_DIR not in sys.path:
+    sys.path.insert(0, HW_DIR)
 
-import imu, ultrasonic
+import imu, ultrasonic   # ← your custom HW drivers
 
+# ───────────────────────────────────────────────────────────────────
+def safe_float(x, default=-1.0):
+    """Convert x→float32.  If it fails or is not finite, return default."""
+    try:
+        f = float(x)
+        if not math.isfinite(f):
+            raise ValueError
+        return np.float32(f)
+    except Exception:
+        return np.float32(default)
+
+# ───────────────────────────────────────────────────────────────────
 def main():
     rospy.init_node('hw_publisher', anonymous=True)
 
-    GPIO.setmode(GPIO.BCM)
-    GPIO.setwarnings(False)
+    GPIO.setmode(GPIO.BCM); GPIO.setwarnings(False)
 
-    imu_pub        = rospy.Publisher('/pollux/imu',        Imu,               queue_size=10)
-    ultrasonic_pub = rospy.Publisher('/pollux/ultrasonic_hw', Float32MultiArray, queue_size=10)
+    imu_pub = rospy.Publisher('/pollux/imu', Imu, queue_size=10)
+    us_pub  = rospy.Publisher('/pollux/ultrasonic_hw',
+                              Float32MultiArray, queue_size=10)
 
-    my_imu = imu.IMUController()
+    my_imu  = imu.IMUController()
 
-    # ⬇⬇  **ONLY the three bottom sensors**  ⬇⬇
-    sensor_config = {
+    sensor_cfg = {
         'bottom_left':  {'trig': 23, 'echo': 18},
         'bottom_mid':   {'trig': 25, 'echo': 24},
         'bottom_right': {'trig': 7,  'echo': 8},
     }
-    my_sensors = ultrasonic.UltrasonicArray(sensor_config)
+    my_us = ultrasonic.UltrasonicArray(sensor_cfg)
 
-    rate   = rospy.Rate(5)        # 5 Hz
-    tick   = 0                    # for periodic debug printing
+    rate, tick = rospy.Rate(5), 0     # 5 Hz
 
     while not rospy.is_shutdown():
-        # ---- IMU ----
+        # ---------- IMU ----------
         data = my_imu.get_filtered_data()
         imu_msg = Imu()
         imu_msg.linear_acceleration.x = data['accelerometer']['x']
@@ -51,23 +65,24 @@ def main():
         imu_msg.angular_velocity.z    = data['gyroscope']['z']
         imu_pub.publish(imu_msg)
 
-        # ---- Ultrasonic ----
-        distances = my_sensors.get_distances()   # dict keyed by bottom_* names
-        distance_msg        = Float32MultiArray()
-        distance_msg.data   = [
-            distances.get('bottom_left',  -1.0),
-            distances.get('bottom_mid',   -1.0),
-            distances.get('bottom_right', -1.0),
+        # ---------- Ultrasonic ----------
+        d = my_us.get_distances()           # dict
+        dist_msg       = Float32MultiArray()
+        dist_msg.data  = [
+            safe_float(d.get('bottom_left')),
+            safe_float(d.get('bottom_mid')),
+            safe_float(d.get('bottom_right')),
         ]
-        ultrasonic_pub.publish(distance_msg)
+        us_pub.publish(dist_msg)
 
-        # Optional: print every 2 s for quick debugging
+        # periodic console print
         tick += 1
         if tick % 10 == 0:
-            rospy.loginfo(f"[hw_publisher] bottom US: {distance_msg.data}")
+            rospy.loginfo(f"[hw_publisher] bottom US: {list(dist_msg.data)}")
 
         rate.sleep()
 
+# ───────────────────────────────────────────────────────────────────
 if __name__ == '__main__':
     try:
         main()
