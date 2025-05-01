@@ -1,20 +1,13 @@
 #!/usr/bin/env python3
 """
-safe_rl_brain_node.py  –  PPO agent + hard safety-shield
-────────────────────────────────────────────────────────
-• Learns a coverage walk while a blocking shield keeps the robot safe.
-• Reward encourages exploration, correct one-side turns and finishing
-  a cliff / dual-wall routine.  Penalises hazards and oscillation.
-
-CLI
----
-  Inference only (shield active, no learning):
-      rosrun pollux_amr safe_rl_brain_node.py --mode infer
-
-  Train from scratch (safe exploration):
-      rosrun pollux_amr safe_rl_brain_node.py --mode train --timesteps 200000
+safe_rl_brain_node.py
+────────────────────────────────────────────────────────────────────
+• PPO agent (SB-3) that learns coverage while a blocking “shield”
+  copied from unified_brain_node keeps the robot safe.
+• Reward: exploration, correct single-side turns, completing a
+  cliff/dual-wall routine; penalties for hazards & oscillation.
 """
-# -------------------------------------------------------------------
+# ------------------------------------------------------------------
 import argparse, random, time
 from pathlib import Path
 
@@ -32,36 +25,36 @@ IMU_T    = "/pollux/imu"
 CMD_T    = "/pollux/motor_cmd"
 
 FWD, BWD, STOP       = 0, 1, 6
-SPIN_L, SPIN_R, ROT  = 4, 5, 7
+SPIN_L, SPIN_R, ROT  = 4, 5, 7          # 180-degree rotate = 7
 ACTION_MAP           = {0: FWD, 1: BWD, 2: SPIN_L, 3: SPIN_R, 4: STOP, 5: ROT}
 
-# ─── safety constants (from unified_brain_node) ────────────────────
-CLIFF_CM, OBST_CM    = 10.0, 12.0
+# ─── shield constants (mirrors unified_brain_node) ─────────────────
+CLIFF_CM, OBST_CM    = 10.0, 12.0       # hazard thresholds
 BACK_SEC, ROT_SEC    = 2.0, 4.0
 SPIN_SEC             = 2.0
-CTRL_HZ              = 2               # agent control frequency
+CTRL_HZ              = 2                # agent control frequency
 
 # ═════════════════════ ENVIRONMENT ═════════════════════════════════
 class PolluxEnv(gym.Env):
-    """Real-robot Gym environment (never terminates episodes)."""
+    """Real-robot Gym environment (never self-terminates)."""
     metadata, MAX_CM, ACC_LIM = {}, 100.0, 3.0
 
     def __init__(self):
         super().__init__()
         self.cmd_pub = rospy.Publisher(CMD_T, Int32, queue_size=4)
 
-        # sensor buffers
+        # rolling sensor buffers
         self.bottom = np.zeros(3, np.float32)
         self.front  = np.zeros(2, np.float32)
         self.acc_xy = [0.0, 0.0]
 
-        # ---- CORRECT subscriber signature: only keyword queue_size ----
-        rospy.Subscriber(BOTTOM_T, Float32MultiArray,
-                         self._bottom_cb, queue_size=5)
-        rospy.Subscriber(FRONT_T,  Float32MultiArray,
-                         self._front_cb,  queue_size=5)
-        rospy.Subscriber(IMU_T,    Imu,
-                         self._imu_cb,    queue_size=5)
+        # — corrected Subscriber signatures —
+        rospy.Subscriber(topic=BOTTOM_T, data_class=Float32MultiArray,
+                         callback=self._bottom_cb, queue_size=5)
+        rospy.Subscriber(topic=FRONT_T,  data_class=Float32MultiArray,
+                         callback=self._front_cb,  queue_size=5)
+        rospy.Subscriber(topic=IMU_T,    data_class=Imu,
+                         callback=self._imu_cb,    queue_size=5)
 
         self.action_space      = spaces.Discrete(6)
         self.observation_space = spaces.Box(0, 1, (7,), dtype=np.float32)
@@ -83,41 +76,33 @@ class PolluxEnv(gym.Env):
 
     # ── helpers ────────────────────────────────────────────────────
     def _get_obs(self):
-        to_unit = lambda v: min(v, self.MAX_CM) / self.MAX_CM
-        ax_n = min(abs(self.acc_xy[0]), self.ACC_LIM) / self.ACC_LIM
-        ay_n = min(abs(self.acc_xy[1]), self.ACC_LIM) / self.ACC_LIM
-        return np.array([*map(to_unit, self.bottom),
-                         *map(to_unit, self.front),
-                         ax_n, ay_n], dtype=np.float32)
+        to_u = lambda v: min(v, self.MAX_CM) / self.MAX_CM
+        ax_u = min(abs(self.acc_xy[0]), self.ACC_LIM) / self.ACC_LIM
+        ay_u = min(abs(self.acc_xy[1]), self.ACC_LIM) / self.ACC_LIM
+        return np.array([*map(to_u, self.bottom),
+                         *map(to_u, self.front),
+                         ax_u, ay_u], np.float32)
 
-    def _coverage_reward(self, act, obs):
+    def _reward(self, act, obs):
         b_cm, f_cm = obs[:3]*self.MAX_CM, obs[3:5]*self.MAX_CM
-        cliff_hit  = (b_cm > CLIFF_CM).any()
-        obst_left  = 0.0 < f_cm[0] < OBST_CM
-        obst_right = 0.0 < f_cm[1] < OBST_CM
-        obst_both  = obst_left and obst_right
+        cliff      = (b_cm > CLIFF_CM).any()
+        left, right = 0 < f_cm[0] < OBST_CM, 0 < f_cm[1] < OBST_CM
+        both       = left and right
 
         r = 0.0
-        # hazards
-        if cliff_hit:  r -= 5.0
-        elif obst_both: r -= 2.0
-
-        # correct single-side spin
-        if   obst_left  and ACTION_MAP[act] == SPIN_R: r += 1.0
-        elif obst_right and ACTION_MAP[act] == SPIN_L: r += 1.0
-
-        # bonus for forward after a rotate (routine finished)
+        if cliff:      r -= 5.0
+        elif both:     r -= 2.0
+        if left  and ACTION_MAP[act] == SPIN_R: r += 1.0
+        if right and ACTION_MAP[act] == SPIN_L: r += 1.0
         if ACTION_MAP[act] == FWD and self.prev_act == ROT: r += 3.0
 
-        # encourage movement / discourage jitter
         if self.prev_obs is not None:
             diff = np.linalg.norm(obs - self.prev_obs)
             r += 0.5 * diff
             if diff < 0.01: r -= 0.05
 
-        # living costs
-        if ACTION_MAP[act] == BWD and not (cliff_hit or obst_both): r -= 0.2
-        if self.prev_act is not None and act == self.prev_act:      r -= 0.1
+        if ACTION_MAP[act] == BWD and not (cliff or both): r -= 0.2
+        if self.prev_act is not None and act == self.prev_act: r -= 0.1
         return r
 
     # ── Gym API ────────────────────────────────────────────────────
@@ -130,16 +115,14 @@ class PolluxEnv(gym.Env):
         self.cmd_pub.publish(ACTION_MAP[int(act)])
         self.rate.sleep()
         obs  = self._get_obs()
-        rew  = self._coverage_reward(act, obs)
-        done = False
+        rew  = self._reward(act, obs)
         self.prev_obs, self.prev_act = obs, act
-        return obs, rew, done, {}
+        return obs, rew, False, {}
 
     def close(self): self.cmd_pub.publish(STOP)
 
 # ═════════════════════ SAFETY SHIELD ═══════════════════════════════
 class Shield:
-    """Blocking hazard handler."""
     def __init__(self, pub):
         self.pub = pub
         self.last_cliff = self.last_front = 0.0
@@ -151,18 +134,18 @@ class Shield:
 
     def _rand_spin(self):
         if random.random() < 0.5:
-            cmd = SPIN_L if random.random() < 0.5 else SPIN_R
-            self.pub.publish(cmd); rospy.sleep(random.uniform(1.0, 2.0))
+            self.pub.publish(SPIN_L if random.random() < 0.5 else SPIN_R)
+            rospy.sleep(random.uniform(1.0, 2.0))
 
     # sequences
-    def _cliff_seq(self):
+    def _cliff(self):
         self.pub.publish(STOP); rospy.sleep(0.5)
         self._back_twice()
-        self.pub.publish(ROT); rospy.sleep(ROT_SEC)
+        self.pub.publish(ROT);  rospy.sleep(ROT_SEC)
         self._rand_spin()
-        self.pub.publish(FWD); rospy.sleep(1.0)
+        self.pub.publish(FWD);  rospy.sleep(1.0)
 
-    def _obs_seq(self, left, right):
+    def _obst(self, left, right):
         self.pub.publish(STOP); rospy.sleep(0.5)
         if left and right:
             self._back_twice(); self.pub.publish(ROT); rospy.sleep(ROT_SEC)
@@ -173,7 +156,7 @@ class Shield:
             self.pub.publish(SPIN_L); rospy.sleep(SPIN_SEC)
         self.pub.publish(FWD); rospy.sleep(1.0)
 
-    # main entry
+    # filter
     def filter(self, obs_like) -> bool:
         obs   = np.asarray(obs_like).squeeze()
         b_cm  = obs[:3] * 100.0
@@ -183,10 +166,10 @@ class Shield:
         right = 0.0 < f_cm[1] < OBST_CM
         now   = rospy.get_time()
 
-        if cliff and (now - self.last_cliff) > 4.0:
-            self.last_cliff = now; self._cliff_seq(); return True
-        if (left or right) and (now - self.last_front) > 3.0:
-            self.last_front = now; self._obs_seq(left, right); return True
+        if cliff and now - self.last_cliff > 4.0:
+            self.last_cliff = now; self._cliff(); return True
+        if (left or right) and now - self.last_front > 3.0:
+            self.last_front = now; self._obst(left, right); return True
         return False
 
 # ═════════════════════ argparse / main ═════════════════════════════
@@ -211,8 +194,7 @@ def main():
     model_p.parent.mkdir(parents=True, exist_ok=True)
 
     if args.mode == "train":
-        model = PPO("MlpPolicy", env,
-                    learning_rate=1e-3, n_steps=512,
+        model = PPO("MlpPolicy", env, learning_rate=1e-3, n_steps=512,
                     batch_size=64, ent_coef=0.01,
                     verbose=1, device="cpu")
     else:
@@ -220,7 +202,7 @@ def main():
             rospy.logerr(f"Model {model_p} not found"); return
         model = PPO.load(model_p, env=env, device="cpu")
 
-    # ── inference ────────────────────────────────────────────────
+    # ── inference ─────────────────────────────────────────────────
     if args.mode == "infer":
         rospy.loginfo("Inference (shield ON) – Ctrl-C to quit")
         try:
@@ -240,7 +222,7 @@ def main():
 
     # ── train / resume ───────────────────────────────────────────
     nxt = args.save_every
-    def ckpt_cb(locals_, _):
+    def ckpt_cb(locals_, _globals):
         nonlocal nxt
         steps = locals_["self"].num_timesteps
         if steps >= nxt:
@@ -253,8 +235,7 @@ def main():
         total = 0; rospy.loginfo(f"Training for {args.timesteps:,} steps")
         while total < args.timesteps and not rospy.is_shutdown():
             obs = env.reset()
-            # 4-second rollout (8 env steps @ 2 Hz)
-            for _ in range(CTRL_HZ * 4):
+            for _ in range(CTRL_HZ * 4):                # 4-s rollout
                 act, _ = model.predict(obs, deterministic=False)
                 if shield.filter(obs): break
                 obs, _, _, _ = env.step(act); total += 1
@@ -267,6 +248,6 @@ def main():
         rospy.loginfo(f"Saving final model → {model_p}")
         model.save(model_p); env.close()
 
-# ------------------------------------------------------------------
+# -------------------------------------------------------------------
 if __name__ == "__main__":
     main()
