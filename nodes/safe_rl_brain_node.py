@@ -40,7 +40,7 @@ SPIN_SEC          = 2.0
 CTRL_HZ           = 2                              # agent control rate
 
 # ─── reward tuning ────────────────────────────────────────────────
-COVERAGE_BONUS         = 10     # reward / 10 cm of novel displacement
+COVERAGE_BONUS         = 1.2     # reward / 10 cm of novel displacement
 BACKWARD_BIG_PENALTY   = 4.0     # ↑ (was 2) – blind straight reverse
 UNNEEDED_SPIN_PENALTY  = 1.5     # when both sensors clear
 UNNEEDED_ROT_PENALTY   = 3.0
