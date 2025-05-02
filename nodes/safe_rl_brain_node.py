@@ -277,7 +277,7 @@ def main():
                     callback=_ckpt_cb)
         total += model.num_timesteps - before
 
-    model.save(model_p.parent / f"{model_p.stem}_final.zip")
+    model.save(model_p.parent / f"{model_p.stem}.zip")
 
 # ───────────────────────────────────────────────────────────────────
 if __name__ == "__main__":
